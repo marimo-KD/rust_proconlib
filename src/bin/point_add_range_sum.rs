@@ -1,5 +1,47 @@
-use cargo_snippet::snippet;
-#[snippet("segment_tree")]
+macro_rules! get {
+    ($($t:tt),*; $n:expr) => {
+        {
+            let stdin = std::io::stdin();
+            let ret = std::io::BufRead::lines(stdin.lock()).take($n).map(|line| {
+                let line = line.unwrap();
+                let mut it = line.split_whitespace();
+                _get!(it; $($t),*)
+            }).collect::<Vec<_>>();
+            ret
+        }
+    };
+    ($($t:tt),*) => {
+        {
+            let mut line = String::new();
+            std::io::stdin().read_line(&mut line).unwrap();
+            let mut it = line.split_whitespace();
+            _get!(it; $($t),*)
+        }
+    };
+}
+macro_rules! _get {
+    ($it:ident; [char]) => {
+        _get!($it; String).chars().collect::<Vec<_>>()
+    };
+    ($it:ident; [u8]) => {
+        _get!($it; String).bytes().collect::<Vec<_>>()
+    };
+    ($it:ident; usize1) => {
+        $it.next().unwrap().parse::<usize>().unwrap_or_else(|e| panic!("{}", e)) - 1
+    };
+    ($it:ident; [usize1]) => {
+        $it.map(|s| s.parse::<usize>().unwrap_or_else(|e| panic!("{}", e)) - 1).collect::<Vec<_>>()
+    };
+    ($it:ident; [$t:ty]) => {
+        $it.map(|s| s.parse::<$t>().unwrap_or_else(|e| panic!("{}", e))).collect::<Vec<_>>()
+    };
+    ($it:ident; $t:ty) => {
+        $it.next().unwrap().parse::<$t>().unwrap_or_else(|e| panic!("{}", e))
+    };
+    ($it:ident; $($t:tt),+) => {
+        ($(_get!($it; $t)),*)
+    };
+}
 mod segment_tree {
     pub trait Monoid: Clone {
         fn id() -> Self;
@@ -70,31 +112,32 @@ mod segment_tree {
         }
     }
 }
-#[snippet("segment_tree")]
-#[derive(Clone, Debug, PartialEq, Eq)]
-struct AddMonoid(i32);
-impl segment_tree::Monoid for AddMonoid {
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+struct add_monoid(i64);
+impl segment_tree::Monoid for add_monoid {
     fn id() -> Self {
-        AddMonoid(0)
+        add_monoid(0)
     }
     fn op(&self, x: &Self) -> Self {
-        AddMonoid(self.0 + x.0)
+        add_monoid(self.0 + x.0)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn rsq() {
-        let mut st = segment_tree::SegmentTree::new(10);
-        st.set(1, &AddMonoid(4));
-        assert_eq!(st.query(0, 5), AddMonoid(4));
-        st.set(8, &AddMonoid(4));
-        assert_eq!(st.query(0, 5), AddMonoid(4));
-        st.set(0, &AddMonoid(4));
-        assert_eq!(st.query(0, 5), AddMonoid(8));
-        st.set(4, &AddMonoid(4));
-        assert_eq!(st.query(0, 5), AddMonoid(12));
+fn main() {
+    let (n, q) = get!(i32, i32);
+    let a = get!([i64]);
+    let query = get!([i64];q as usize);
+    let a: Vec<_> = a.iter().map(|x| add_monoid(*x)).collect();
+    let mut st = segment_tree::SegmentTree::new(n as usize);
+    st.init(&a);
+    for i in 0..q {
+        let i = i as usize;
+        if query[i][0] == 0 {
+            let (p, x) = (query[i][1] as usize, query[i][2]);
+            st.set(p, &add_monoid(st[p].0 + x));
+        } else {
+            let (l, r) = (query[i][1] as usize, query[i][2] as usize);
+            println!("{}", st.query(l, r).0);
+        }
     }
 }

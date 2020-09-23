@@ -1,14 +1,12 @@
 use cargo_snippet::snippet;
 
-#[snippet("static_modint")]
+#[snippet("static_modint_montgomery")]
 mod modint {
     use std::ops::*;
     pub trait Mod: Copy {
         const M: u64;
-        const S: u64;
-        const X: u64;
-        fn div(x: u64) -> u64;
-        fn modulo(x: u64) -> u64;
+        fn S() -> u64;
+        fn X() -> u64;
     }
     #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
     pub struct Modint<M> {
@@ -17,7 +15,7 @@ mod modint {
     }
     impl<M: Mod> Modint<M> {
         pub fn new(x: u64) -> Self {
-            Modint::new_internal(M::modulo(x))
+            Modint::new_internal(Self::modulo(x))
         }
         fn new_internal(x: u64) -> Self {
             Self {
@@ -25,8 +23,11 @@ mod modint {
                 phantom: std::marker::PhantomData,
             }
         }
-        pub fn value(self) -> u64 {
-            self.x
+        fn div(x: u64) -> u64 {
+            ((x as u128 * M::X() as u128 >> M::S()) >> 64) as u64
+        }
+        fn modulo(x: u64) -> u64 {
+            x - Self::div(x) * M::M
         }
         pub fn pow(self, mut e: u64) -> Self {
             let mut res = Modint::new_internal(1);
@@ -67,8 +68,7 @@ mod modint {
     impl<M: Mod, T: Into<Modint<M>>> Mul<T> for Modint<M> {
         type Output = Self;
         fn mul(self, other: T) -> Self {
-            Self::new(self.x.wrapping_mul(other.into().x))
-            // Self::new_internal((self.x * other.into().x) % M::M)
+            Self::new_internal(Self::modulo(self.x*other.into().x))
         }
     }
     impl<M: Mod, T: Into<Modint<M>>> AddAssign<T> for Modint<M> {
@@ -93,32 +93,19 @@ mod modint {
     }
     impl<M: Mod> From<i64> for Modint<M> {
         fn from(x: i64) -> Self {
-            Self::new((x % M::M as i64) as u64 + M::M)
+            Self::new((x % M::M) + M::M)
         }
     }
     impl<M: Mod> From<i32> for Modint<M> {
         fn from(x: i32) -> Self {
-            Self::from(x as i64)
+            Self::new(x as i64)
         }
     }
     impl<M: Mod> From<usize> for Modint<M> {
         fn from(x: usize) -> Self {
-            Self::new(x as u64)
+            Self::new(x as i64)
         }
     }
-}
-
-#[snippet("static_modint")]
-const fn _next_power_of_two(mut x: u64) -> u64 {
-    x -= 1;
-    x |= x >> 1;
-    x |= x >> 2;
-    x |= x >> 4;
-    x |= x >> 8;
-    x |= x >> 16;
-    x |= x >> 32;
-    x += 1;
-    x
 }
 
 #[snippet("static_modint")]
@@ -128,58 +115,27 @@ macro_rules! define_mod {
         struct $struct_name {}
         impl modint::Mod for $struct_name {
             const M: u64 = $modulo;
-            const S: u64 = {
-                let log = Self::M.wrapping_sub(1);
-                let log = _next_power_of_two(log).trailing_zeros() as u64;
-                let s =
-                    [log.wrapping_sub(1), log][Self::M.wrapping_sub(1).is_power_of_two() as usize];
-                [s + 64, 0][(Self::M == 1) as usize]
-            };
-            const X: u64 = {
-                let s = Self::S as u32;
-                let m = Self::M as u128;
-                (((1 as u128).wrapping_shl(s).wrapping_add(m).wrapping_sub(1)) / m) as u64
-            };
-            fn div(x: u64) -> u64 {
-                (((x as u128) * Self::X as u128).wrapping_shr(Self::S as u32)) as u64
+            fn S() -> u64 {
+                if (Self::M - 1).is_power_of_two() {
+                    (Self::M - 1).trailing_zeros() as u64
+                } else {
+                    (Self::M - 1).trailing_zeros() as u64 - 1
+                }
             }
-            fn modulo(x: u64) -> u64 {
-                x.wrapping_sub(Self::div(x) * Self::M)
+            fn X() -> u64 {
+                ((((1 as u128) << (Self::S() + 64)) + Self::M as u128 - 1) / Self::M as u128) as u64
             }
-            // 逆数乗算
-            // Barrett reductionなるものに近いんだとか
         }
     };
 }
 
 define_mod!(P, 1_000_000_007);
-define_mod!(A, 1_000_000);
 type ModInt = modint::Modint<P>;
-
-#[test]
-fn fast_mod_test() {
-    use crate::static_modint::modint::Mod;
-    let a = 1_000_000_007;
-    assert_eq!(A::modulo(a), 7);
-}
 
 #[test]
 fn modint_test() {
     let a = ModInt::new(5);
     let b = ModInt::new(10);
-    let c = ModInt::new(1_000_000_006);
-    assert_eq!((a + b).value(), 15);
-    assert_eq!((a * b).value(), 50);
-    assert_eq!((a * c).value(), (1_000_000_006 * 5) % 1_000_000_007);
-}
-#[test]
-fn modint_test_fac() {
-    use crate::static_modint::modint::Mod;
-    let mut a: u64 = 1;
-    let mut b = ModInt::new(1);
-    for i in 1..=10_000_000 {
-        a = a * i % 1_000_000_007;
-        b *= ModInt::new(i);
-        assert_eq!(a, b.value(), "a:{} b:{} i:{} s:{} x{}", a, b, i, P::S, P::X);
-    }
+    assert_eq!(a + b, ModInt::new(15));
+    assert_eq!(a * b, ModInt::new(50));
 }

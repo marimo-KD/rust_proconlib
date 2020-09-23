@@ -1,8 +1,4 @@
-use cargo_snippet::snippet;
-use std::io::*;
-use std::iter;
-
-#[snippet("get_macro")]
+use std::collections::*;
 macro_rules! get {
     ($($t:tt),*; $n:expr) => {
         {
@@ -24,7 +20,6 @@ macro_rules! get {
         }
     };
 }
-#[snippet("get_macro")]
 macro_rules! _get {
     ($it:ident; [char]) => {
         _get!($it; String).chars().collect::<Vec<_>>()
@@ -48,8 +43,18 @@ macro_rules! _get {
         ($(_get!($it; $t)),*)
     };
 }
-#[test]
-fn get_macro_test() {
-    let a = get!([i64]);
-    println!("{:?}", a);
+fn main() {
+    let q = get!(usize);
+    let query = get!([i64];q);
+    let mut array = BTreeMap::new();
+    for i in 0..q {
+        if query[i][0] == 0 {
+            let (k, v) = (query[i][1] as usize, query[i][2]);
+            array.insert(k, v);
+        } else {
+            let k = query[i][1] as usize;
+            let ret = array.entry(k).or_insert(0);
+            println!("{}", ret);
+        }
+    }
 }
