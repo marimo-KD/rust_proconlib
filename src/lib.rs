@@ -1,7 +1,10 @@
 pub mod combination;
+pub mod fenwick_tree;
 pub mod fft;
 pub mod geometry;
-pub mod get_macro;
+// pub mod get_macro;
+pub mod lazy_segment_tree;
+pub mod mo;
 pub mod run_length_encoding;
 pub mod scanner;
 pub mod segment_tree;

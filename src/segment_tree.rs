@@ -11,11 +11,7 @@ mod segment_tree {
     }
     impl<T: Monoid> SegmentTree<T> {
         fn get_proper_size(len: usize) -> usize {
-            let mut ret = 1;
-            while ret < len {
-                ret *= 2;
-            }
-            ret
+            len.next_power_of_two()
         }
         pub fn new(len: usize) -> Self {
             let len = Self::get_proper_size(len);
@@ -24,7 +20,7 @@ mod segment_tree {
                 len,
             }
         }
-        pub fn init(&mut self, initializer: &Vec<T>) {
+        pub fn new_with_init(&mut self, initializer: &Vec<T>) {
             let len = Self::get_proper_size(initializer.len());
             let mut data = vec![T::id(); 2 * len];
             for (idx, val) in initializer.iter().enumerate() {
@@ -72,16 +68,29 @@ mod segment_tree {
 }
 #[snippet("segment_tree")]
 #[derive(Clone, Debug, PartialEq, Eq)]
-struct AddMonoid(i32);
+pub struct AddMonoid(i32);
+#[snippet("segment_tree")]
 impl segment_tree::Monoid for AddMonoid {
     fn id() -> Self {
-        AddMonoid(0)
+        Self(0)
     }
     fn op(&self, x: &Self) -> Self {
-        AddMonoid(self.0 + x.0)
+        Self(self.0 + x.0)
     }
 }
 
+#[snippet("segment_tree")]
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct MaxMonoid(i32);
+#[snippet("segment_tree")]
+impl segment_tree::Monoid for MaxMonoid {
+    fn id() -> Self {
+        Self(0)
+    }
+    fn op(&self, x: &Self) -> Self {
+        Self(self.0.max(x.0))
+    }
+}
 #[cfg(test)]
 mod tests {
     use super::*;

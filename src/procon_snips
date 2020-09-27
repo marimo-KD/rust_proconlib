@@ -1,3 +1,68 @@
+snippet Mo
+mod mo {
+    pub trait State {
+        type Answer: std::clone::Clone + std::default::Default;
+        fn add_left(&mut self, idx: usize);
+        fn add_right(&mut self, idx: usize);
+        fn erase_left(&mut self, idx: usize);
+        fn erase_right(&mut self, idx: usize);
+        fn answer(&mut self, idx: usize) -> Self::Answer;
+    }
+    pub struct Mo<T: State> {
+        state: T,
+        n: usize,
+        query: Vec<(usize, usize)>,
+    }
+    impl<T: State> Mo<T> {
+        fn new(state: T, n: usize) -> Self {
+            Self {
+                state,
+                n,
+                query: vec![(0, 0); 0],
+            }
+        }
+        fn add(&mut self, l: usize, r: usize) {
+            self.query.push((l, r));
+        }
+        fn run(&mut self) -> Vec<T::Answer> {
+            let q = self.query.len();
+            let w = (self.n as f64).sqrt() as usize;
+            let mut ret = vec![T::Answer::default(); q];
+            let mut order: Vec<_> = (0..q).collect();
+            order.sort_by(|&i, &j| {
+                if self.query[i].0 / w != self.query[j].0 / w {
+                    self.query[i].0.cmp(&self.query[j].0)
+                } else {
+                    self.query[i].1.cmp(&self.query[j].1)
+                }
+            });
+            let (mut lb, mut rb) = (0, 0);
+            for i in order {
+                let (li, ri) = self.query[i];
+                while lb > li {
+                    lb -= 1;
+                    self.state.add_left(lb);
+                }
+                while rb < ri {
+                    self.state.add_right(rb);
+                    rb += 1;
+                }
+                while lb < li {
+                    self.state.erase_left(lb);
+                    lb += 1;
+                }
+                while rb > ri {
+                    rb -= 1;
+                    self.state.erase_right(rb);
+                }
+                ret[i] = self.state.answer(i);
+            }
+            ret
+        }
+    }
+}
+endsnippet
+
 snippet combination
 mod modint {
     use std::ops::*;
@@ -127,6 +192,64 @@ mod combination {
 }
 endsnippet
 
+snippet fenwick_tree
+struct FenwickTree<T> {
+    data: Vec<T>,
+}
+impl<
+        T: std::ops::Add<Output = T>
+            + std::ops::Sub<Output = T>
+            + std::default::Default
+            + std::marker::Copy,
+    > FenwickTree<T>
+{
+    fn new(n: usize) -> Self {
+        let mut ret = Self {
+            data: vec![std::default::Default::default(); n + 1],
+        };
+        ret.build();
+        ret
+    }
+    fn new_with_init(mut data: Vec<T>) -> Self {
+        let mut ret = Self { data };
+        ret.build();
+        ret
+    }
+    fn build(&mut self) {
+        for i in 1..self.data.len() as i32 {
+            let j = (i + (i & -i)) as usize;
+            if j < self.data.len() {
+                self.data[j] = self.data[j] + self.data[i as usize];
+            }
+        }
+    }
+    fn add(&mut self, mut k: usize, x: T) {
+        k += 1;
+        while k < self.data.len() {
+            self.data[k] = self.data[k] + x;
+            k += {
+                let k = k as i32;
+                (k & -k) as usize
+            }
+        }
+    }
+    fn query0(&mut self, mut k: usize) -> T {
+        let mut ret: T = std::default::Default::default();
+        while k > 0 {
+            ret = ret + self.data[k];
+            k -= {
+                let k = k as i32;
+                (k & -k) as usize
+            };
+        }
+        ret
+    }
+    fn query(&mut self, l: usize, r: usize) -> T {
+        self.query0(r) - self.query0(l)
+    }
+}
+endsnippet
+
 snippet geometry
 mod geometry {
     use std::ops::*;
@@ -216,6 +339,135 @@ macro_rules ! get {($ ($ t : tt ) ,*; $ n : expr ) => {{let stdin = std :: io ::
 macro_rules ! _get {($ it : ident ; [char ] ) => {_get ! ($ it ; String ) . chars () . collect ::< Vec < _ >> () } ; ($ it : ident ; [u8 ] ) => {_get ! ($ it ; String ) . bytes () . collect ::< Vec < _ >> () } ; ($ it : ident ; usize1 ) => {$ it . next () . unwrap () . parse ::< usize > () . unwrap_or_else (| e | panic ! ("{}" , e ) ) - 1 } ; ($ it : ident ; [usize1 ] ) => {$ it . map (| s | s . parse ::< usize > () . unwrap_or_else (| e | panic ! ("{}" , e ) ) - 1 ) . collect ::< Vec < _ >> () } ; ($ it : ident ; [$ t : ty ] ) => {$ it . map (| s | s . parse ::<$ t > () . unwrap_or_else (| e | panic ! ("{}" , e ) ) ) . collect ::< Vec < _ >> () } ; ($ it : ident ; $ t : ty ) => {$ it . next () . unwrap () . parse ::<$ t > () . unwrap_or_else (| e | panic ! ("{}" , e ) ) } ; ($ it : ident ; $ ($ t : tt ) ,+ ) => {($ (_get ! ($ it ; $ t ) ) ,* ) } ; }
 endsnippet
 
+snippet lazy_segment_tree
+mod lazy_segment_tree {
+    pub trait Element<T: Effecter>: Clone {
+        fn id() -> Self;
+        fn op(&self, x: Self) -> Self;
+        fn affect(&self, x: T) -> Self;
+    }
+    pub trait Effecter: Clone + Eq {
+        fn id() -> Self;
+        fn op(&self, x: Self) -> Self;
+    }
+    pub struct LazySegmentTree<T: Element<S>, S: Effecter> {
+        data: Vec<T>,
+        lazy: Vec<S>,
+        len: usize,
+        height: usize,
+    }
+    impl<T: Element<S>, S: Effecter> LazySegmentTree<T, S> {
+        #[inline]
+        fn get_proper_size(len: usize) -> (usize, usize) {
+            let ret = len.next_power_of_two();
+            (ret, ret.trailing_zeros() as usize)
+        }
+        #[inline]
+        fn propagate(&mut self, k: usize) {
+            if self.lazy[k] != S::id() {
+                self.lazy[2 * k] = self.lazy[2 * k].op(self.lazy[k].clone());
+                self.lazy[2 * k + 1] = self.lazy[2 * k + 1].op(self.lazy[k].clone());
+                self.data[k] = self.apply(k);
+                self.lazy[k] = S::id();
+            }
+        }
+        #[inline]
+        fn apply(&mut self, k: usize) -> T {
+            if self.lazy[k] != S::id() {
+                self.data[k].clone()
+            } else {
+                self.data[k].affect(self.lazy[k].clone())
+            }
+        }
+        #[inline]
+        fn recalc(&mut self, mut k: usize) {
+            k >>= 1;
+            while k > 0 {
+                self.data[k] = self.apply(2 * k).op(self.apply(2 * k + 1));
+                k >>= 1;
+            }
+        }
+        #[inline]
+        fn thrust(&mut self, k: usize) {
+            (1..=self.height).rev().for_each(|i| self.propagate(k >> i));
+        }
+        pub fn new(len: usize) -> Self {
+            let (len, height) = Self::get_proper_size(len);
+            Self {
+                data: vec![T::id(); 2 * len],
+                lazy: vec![S::id(); 2 * len],
+                len,
+                height,
+            }
+        }
+        pub fn update(&mut self, l: usize, r: usize, x: &S) {
+            if l >= r {
+                return;
+            }
+            let (mut l, mut r) = (l + self.len, r + self.len);
+            self.thrust(l);
+            self.thrust(r - 1);
+            while l < r {
+                if l % 2 == 1 {
+                    self.lazy[l] = x.op(self.lazy[l].clone());
+                    l += 1;
+                }
+                if r % 2 == 1 {
+                    r -= 1;
+                    self.lazy[r] = self.lazy[r].op(x.clone());
+                }
+            }
+        }
+        pub fn query(&mut self, l: usize, r: usize) -> T {
+            if l >= r {
+                return T::id();
+            }
+            let (mut l, mut r) = (l + self.len, r + self.len);
+            self.thrust(l);
+            self.thrust(r);
+            let (mut L, mut R) = (T::id(), T::id());
+            while l < r {
+                if l % 2 == 1 {
+                    L = L.op(self.apply(l));
+                    l += 1;
+                }
+                if r % 2 == 1 {
+                    r -= 1;
+                    R = R.op(self.apply(r));
+                }
+            }
+            L.op(R)
+        }
+    }
+}
+mod monoids {
+    use super::lazy_segment_tree::*;
+    #[derive(Clone, Eq, PartialEq)]
+    struct SumMonoid(i64);
+    impl Element<SetMonoid> for SumMonoid {
+        fn id() -> Self {
+            Self(0)
+        }
+        fn op(&self, other: Self) -> Self {
+            Self(self.0 + other.0)
+        }
+        fn affect(&self, x: SetMonoid) -> Self {
+            Self(x.0)
+        }
+    }
+    #[derive(Clone, Eq, PartialEq)]
+    struct SetMonoid(i64);
+    impl Effecter for SetMonoid {
+        fn id() -> Self {
+            Self(-1)
+        }
+        fn op(&self, other: Self) -> Self {
+            Self(other.0)
+        }
+    }
+}
+endsnippet
+
 snippet scanner
 pub mod scanner {
     use std::cell::RefCell;
@@ -262,61 +514,6 @@ pub mod scanner {
         pub fn scan<U: FromStr>(&mut self) -> U {
             self.tokenizer.next().unwrap().parse::<U>().ok().unwrap()
         }
-        pub fn scanfn<F, R>(&mut self, mut f: F) -> R
-        where
-            F: FnMut(&mut Self) -> R,
-        {
-            f(self)
-        }
-        pub fn scan2<U: FromStr, V: FromStr>(&mut self) -> (U, V) {
-            (self.scan::<U>(), self.scan::<V>())
-        }
-        pub fn scan3<U: FromStr, V: FromStr, W: FromStr>(&mut self) -> (U, V, W) {
-            (self.scan::<U>(), self.scan::<V>(), self.scan::<W>())
-        }
-        pub fn scan4<U: FromStr, V: FromStr, W: FromStr, X: FromStr>(&mut self) -> (U, V, W, X) {
-            (
-                self.scan::<U>(),
-                self.scan::<V>(),
-                self.scan::<W>(),
-                self.scan::<X>(),
-            )
-        }
-        pub fn scan5<U: FromStr, V: FromStr, W: FromStr, X: FromStr, Y: FromStr>(
-            &mut self,
-        ) -> (U, V, W, X, Y) {
-            (
-                self.scan::<U>(),
-                self.scan::<V>(),
-                self.scan::<W>(),
-                self.scan::<X>(),
-                self.scan::<Y>(),
-            )
-        }
-        pub fn scan_vec<U: FromStr>(&mut self, n: usize) -> Vec<U> {
-            (0..n).map(|_| self.scan::<U>()).collect()
-        }
-        pub fn scan_vec2<U: FromStr, V: FromStr>(&mut self, n: usize) -> Vec<(U, V)> {
-            (0..n).map(|_| self.scan2::<U, V>()).collect()
-        }
-        pub fn scan_vec3<U: FromStr, V: FromStr, W: FromStr>(
-            &mut self,
-            n: usize,
-        ) -> Vec<(U, V, W)> {
-            (0..n).map(|_| self.scan3::<U, V, W>()).collect()
-        }
-        pub fn scan_vec4<U: FromStr, V: FromStr, W: FromStr, X: FromStr>(
-            &mut self,
-            n: usize,
-        ) -> Vec<(U, V, W, X)> {
-            (0..n).map(|_| self.scan4::<U, V, W, X>()).collect()
-        }
-        pub fn scan_vec5<U: FromStr, V: FromStr, W: FromStr, X: FromStr, Y: FromStr>(
-            &mut self,
-            n: usize,
-        ) -> Vec<(U, V, W, X, Y)> {
-            (0..n).map(|_| self.scan5::<U, V, W, X, Y>()).collect()
-        }
     }
     pub fn build_scanner() -> Scanner<io::StdinLock<'static>> {
         let stdin = Box::leak(Box::new(io::stdin()));
@@ -325,6 +522,7 @@ pub mod scanner {
         }
     }
 }
+macro_rules ! scan {($ scanner : ident ; [char ] ) => {$ scanner . scan ::< String > () . chars () . collect ::< Vec < _ >> () } ; ($ scanner : ident ; [u8 ] ) => {$ scanner . scan ::< String > () . bytes . collect ::< Vec < _ >> () } ; ($ scanner : ident ; [$ ($ t : tt ) ,+; $ n : expr ] ) => {(0 ..$ n ) . map (| _ | ($ (scan ! ($ scanner ;$ t ) ) ,* ) ) . collect ::< Vec < _ >> () } ; ($ scanner : ident ; $ t : ty ) => {$ scanner . scan ::<$ t > () } ; ($ scanner : ident ; $ ($ t : tt ) ,+ ) => {($ (scan ! ($ scanner ; $ t ) ) ,* ) } ; }
 endsnippet
 
 snippet segment_tree
@@ -339,11 +537,7 @@ mod segment_tree {
     }
     impl<T: Monoid> SegmentTree<T> {
         fn get_proper_size(len: usize) -> usize {
-            let mut ret = 1;
-            while ret < len {
-                ret *= 2;
-            }
-            ret
+            len.next_power_of_two()
         }
         pub fn new(len: usize) -> Self {
             let len = Self::get_proper_size(len);
@@ -352,7 +546,7 @@ mod segment_tree {
                 len,
             }
         }
-        pub fn init(&mut self, initializer: &Vec<T>) {
+        pub fn new_with_init(&mut self, initializer: &Vec<T>) {
             let len = Self::get_proper_size(initializer.len());
             let mut data = vec![T::id(); 2 * len];
             for (idx, val) in initializer.iter().enumerate() {
@@ -399,7 +593,25 @@ mod segment_tree {
     }
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
-struct AddMonoid(i32);
+pub struct AddMonoid(i32);
+impl segment_tree::Monoid for AddMonoid {
+    fn id() -> Self {
+        Self(0)
+    }
+    fn op(&self, x: &Self) -> Self {
+        Self(self.0 + x.0)
+    }
+}
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct MaxMonoid(i32);
+impl segment_tree::Monoid for MaxMonoid {
+    fn id() -> Self {
+        Self(0)
+    }
+    fn op(&self, x: &Self) -> Self {
+        Self(self.0.max(x.0))
+    }
+}
 endsnippet
 
 snippet static_modint
