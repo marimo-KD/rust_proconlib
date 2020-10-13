@@ -1,9 +1,13 @@
+use super::alge_struct::alge;
 use cargo_snippet::snippet;
 
 #[snippet("static_modint")]
-mod modint {
+#[snippet(include = "alge")]
+#[macro_use]
+pub mod modint {
+    use super::alge::{One, Zero};
     use std::ops::*;
-    pub trait Mod: Copy {
+    pub trait Mod: Copy + std::fmt::Debug + PartialEq {
         const M: u64;
         const S: u64;
         const X: u64;
@@ -44,10 +48,18 @@ mod modint {
             self.pow(M::M - 2)
         }
     }
+    impl<M: Mod> Neg for Modint<M> {
+        type Output = Self;
+        fn neg(self) -> Self::Output {
+            self * Self::new(M::M - 1)
+        }
+    }
+    // {{{ operation
+    // {{{ binary operation
     impl<M: Mod, T: Into<Modint<M>>> Add<T> for Modint<M> {
         type Output = Self;
-        fn add(self, other: T) -> Self {
-            let mut sum = self.x + other.into().x;
+        fn add(self, rhs: T) -> Self {
+            let mut sum = self.x + rhs.into().x;
             if sum >= M::M {
                 sum -= M::M;
             }
@@ -56,8 +68,8 @@ mod modint {
     }
     impl<M: Mod, T: Into<Modint<M>>> Sub<T> for Modint<M> {
         type Output = Self;
-        fn sub(self, other: T) -> Self {
-            let mut diff = self.x as i64 - other.into().x as i64;
+        fn sub(self, rhs: T) -> Self {
+            let mut diff = self.x as i64 - rhs.into().x as i64;
             if diff < 0 {
                 diff += M::M as i64;
             }
@@ -66,31 +78,36 @@ mod modint {
     }
     impl<M: Mod, T: Into<Modint<M>>> Mul<T> for Modint<M> {
         type Output = Self;
-        fn mul(self, other: T) -> Self {
-            Self::new(self.x.wrapping_mul(other.into().x))
+        fn mul(self, rhs: T) -> Self {
+            Self::new(self.x.wrapping_mul(rhs.into().x))
             // Self::new_internal((self.x * other.into().x) % M::M)
         }
     }
+    // }}}
+    // {{{ compound
     impl<M: Mod, T: Into<Modint<M>>> AddAssign<T> for Modint<M> {
-        fn add_assign(&mut self, other: T) {
-            *self = *self + other;
+        fn add_assign(&mut self, rhs: T) {
+            *self = *self + rhs;
         }
     }
     impl<M: Mod, T: Into<Modint<M>>> SubAssign<T> for Modint<M> {
-        fn sub_assign(&mut self, other: T) {
-            *self = *self - other;
+        fn sub_assign(&mut self, rhs: T) {
+            *self = *self - rhs;
         }
     }
     impl<M: Mod, T: Into<Modint<M>>> MulAssign<T> for Modint<M> {
-        fn mul_assign(&mut self, other: T) {
-            *self = *self * other;
+        fn mul_assign(&mut self, rhs: T) {
+            *self = *self * rhs;
         }
     }
-    impl<M> std::fmt::Display for Modint<M> {
+    // }}}
+    // }}}
+    impl<M: Mod> std::fmt::Display for Modint<M> {
         fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
             self.x.fmt(f)
         }
     }
+    // {{{ from
     impl<M: Mod> From<i64> for Modint<M> {
         fn from(x: i64) -> Self {
             Self::new((x % M::M as i64) as u64 + M::M)
@@ -106,50 +123,58 @@ mod modint {
             Self::new(x as u64)
         }
     }
-}
-
-#[snippet("static_modint")]
-const fn _next_power_of_two(mut x: u64) -> u64 {
-    x -= 1;
-    x |= x >> 1;
-    x |= x >> 2;
-    x |= x >> 4;
-    x |= x >> 8;
-    x |= x >> 16;
-    x |= x >> 32;
-    x += 1;
-    x
-}
-
-#[snippet("static_modint")]
-macro_rules! define_mod {
-    ($struct_name:ident, $modulo:expr) => {
-        #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-        struct $struct_name {}
-        impl modint::Mod for $struct_name {
-            const M: u64 = $modulo;
-            const S: u64 = {
-                let log = Self::M.wrapping_sub(1);
-                let log = _next_power_of_two(log).trailing_zeros() as u64;
-                let s =
-                    [log.wrapping_sub(1), log][Self::M.wrapping_sub(1).is_power_of_two() as usize];
-                [s + 64, 0][(Self::M == 1) as usize]
-            };
-            const X: u64 = {
-                let s = Self::S as u32;
-                let m = Self::M as u128;
-                (((1 as u128).wrapping_shl(s).wrapping_add(m).wrapping_sub(1)) / m) as u64
-            };
-            fn div(x: u64) -> u64 {
-                (((x as u128) * Self::X as u128).wrapping_shr(Self::S as u32)) as u64
-            }
-            fn modulo(x: u64) -> u64 {
-                x.wrapping_sub(Self::div(x) * Self::M)
-            }
-            // 逆数乗算
-            // Barrett reductionなるものに近いんだとか
+    //}}}
+    impl<M: Mod> Zero for Modint<M> {
+        fn zero() -> Self {
+            Self::new(0)
         }
-    };
+    }
+    impl<M: Mod> One for Modint<M> {
+        fn one() -> Self {
+            Self::new(1)
+        }
+    }
+    pub const fn _next_power_of_two(mut x: u64) -> u64 {
+        x -= 1;
+        x |= x >> 1;
+        x |= x >> 2;
+        x |= x >> 4;
+        x |= x >> 8;
+        x |= x >> 16;
+        x |= x >> 32;
+        x += 1;
+        x
+    }
+    #[macro_export]
+    macro_rules! define_mod {
+        ($struct_name:ident, $modulo:expr) => {
+            #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+            struct $struct_name {}
+            impl modint::Mod for $struct_name {
+                const M: u64 = $modulo;
+                const S: u64 = {
+                    let log = Self::M.wrapping_sub(1);
+                    let log = modint::_next_power_of_two(log).trailing_zeros() as u64;
+                    let s = [log.wrapping_sub(1), log]
+                        [Self::M.wrapping_sub(1).is_power_of_two() as usize];
+                    [s + 64, 0][(Self::M == 1) as usize]
+                };
+                const X: u64 = {
+                    let s = Self::S as u32;
+                    let m = Self::M as u128;
+                    (((1 as u128).wrapping_shl(s).wrapping_add(m).wrapping_sub(1)) / m) as u64
+                };
+                fn div(x: u64) -> u64 {
+                    (((x as u128) * Self::X as u128).wrapping_shr(Self::S as u32)) as u64
+                }
+                fn modulo(x: u64) -> u64 {
+                    x.wrapping_sub(Self::div(x) * Self::M)
+                }
+                // 逆数乗算
+                // Barrett reductionなるものに近いんだとか
+            }
+        };
+    }
 }
 
 define_mod!(P, 1_000_000_007);
