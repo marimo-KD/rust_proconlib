@@ -1,6 +1,6 @@
 use super::alge_struct::alge;
 use cargo_snippet::snippet;
-#[snippet("segment_tree")]
+#[snippet]
 #[snippet(include = "alge")]
 mod segment_tree {
     use super::alge;

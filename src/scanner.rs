@@ -1,5 +1,5 @@
 use cargo_snippet::snippet;
-#[snippet("scanner")]
+#[snippet]
 pub mod scanner {
     use std::cell::RefCell;
     use std::collections::VecDeque;
@@ -76,7 +76,4 @@ macro_rules! scan {
 
 #[test]
 fn scanner_test() {
-    let mut stdin = scanner::build_scanner();
-    println!("{}", scan!(stdin; i32));
-    println!("{:?}", scan!(stdin; [i32,i32;10]));
 }

@@ -1,23 +1,25 @@
 use super::alge_struct::alge;
-use super::static_modint::modint;
+use super::static_modint::static_modint;
 use cargo_snippet::snippet;
 
-#[snippet("fps")]
+#[snippet]
 #[snippet(include = "static_modint")]
 #[snippet(include = "alge")]
 #[macro_use]
 pub mod fps {
-    use super::alge::Ring;
-    use super::modint;
-    use super::modint::Modint;
+    use super::alge::{Ring, Zero};
+    use super::static_modint;
+    use super::static_modint::Modint;
     use std::ops::*;
-    #[derive(Clone)]
+    #[derive(Clone, Debug)]
     pub struct FormalPowerSeries<T: Ring + Copy> {
         data: Vec<T>,
     }
     impl<T: Ring + Copy> FormalPowerSeries<T> {
         pub fn new(init: Vec<T>) -> Self {
-            Self { data: init }
+            let mut ret = Self { data: init };
+            ret.remove_trailing_zeros();
+            ret
         }
         pub fn leak(&self) -> &Vec<T> {
             &self.data
@@ -37,12 +39,16 @@ pub mod fps {
     }
     impl<T: Ring + Copy> FormalPowerSeries<T> {
         pub fn naive_mul(&self, rhs: &Self) -> Self {
+            if self.data.is_empty() && rhs.data.is_empty() {
+                return Self::zero();
+            }
             let mut ret = Self::new(vec![T::zero(); self.len() + rhs.len()]);
             for (i, &x) in self.data.iter().enumerate() {
                 for (j, &y) in rhs.data.iter().enumerate() {
                     ret.data[i + j] += x * y;
                 }
             }
+            ret.remove_trailing_zeros();
             ret
         }
     }
@@ -54,6 +60,7 @@ pub mod fps {
             self.data.iter().zip(rhs.data.iter()).all(|(&x, &y)| x == y)
         }
     }
+    // {{{ Ops
     impl<T: Ring + Copy> Add for FormalPowerSeries<T> {
         type Output = Self;
         fn add(self, rhs: Self) -> Self::Output {
@@ -86,6 +93,12 @@ pub mod fps {
                 self.data[i] -= v;
             }
             self.remove_trailing_zeros();
+        }
+    }
+    // }}}
+    impl<T:Ring+Copy> Zero for FormalPowerSeries<T> {
+        fn zero() -> Self {
+            Self{data: Vec::new()}
         }
     }
 }

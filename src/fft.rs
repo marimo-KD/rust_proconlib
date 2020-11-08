@@ -1,101 +1,105 @@
-use std::ops::{Add, Mul, Sub};
-// Complex {{{
-#[derive(PartialEq, Copy, Clone, Debug, Default)]
-pub struct Complex {
-    re: f64,
-    im: f64,
-}
-impl Add for Complex {
-    type Output = Self;
-    fn add(self, other: Self) -> Self {
-        Self {
-            re: self.re + other.re,
-            im: self.im + other.im,
-        }
-    }
-}
-impl Sub for Complex {
-    type Output = Self;
-    fn sub(self, other: Self) -> Self {
-        Self {
-            re: self.re - other.re,
-            im: self.im - other.im,
-        }
-    }
-}
-impl Mul for Complex {
-    type Output = Self;
-    fn mul(self, other: Self) -> Self {
-        Self {
-            re: self.re * other.re - self.im * other.im,
-            im: self.im * other.re + self.re * other.im,
-        }
-    }
-}
-impl Complex {
-    fn conj(self) -> Self {
-        Self {
-            re: self.re,
-            im: -self.im,
-        }
-    }
-}
-// }}}
-fn stockham(n: usize, s: usize, x: &mut Vec<Complex>, y: &mut Vec<Complex>) {
-    let m = n / 2;
-    let theta0 = 2.0 * std::f64::consts::PI / n as f64;
-    for p in 0..m {
-        let wp = Complex {
-            re: (p as f64 * theta0).cos(),
-            im: -(p as f64 * theta0).sin(),
-        };
-        for q in 0..s {
-            let a = x[q + s * (p + 0)];
-            let b = x[q + s * (p + m)];
-            y[q + s * (2 * p + 0)] = a + b;
-            y[q + s * (2 * p + 1)] = (a - b) * wp;
-        }
-    }
-}
+use cargo_snippet::snippet;
+#[snippet]
+mod fft {
+    use std::ops::{Add, Div, Mul, Sub};
 
-pub fn fft(x: &mut Vec<Complex>) {
-    // let x.len() is power of 2
-    let mut n = x.len();
-    let mut s = 1;
-    let y = &mut vec![Complex::default(); n];
-    while n > 1 {
-        stockham(n, s, x, y);
-        n >>= 1;
-        s <<= 1;
-        std::mem::swap(x, y);
+    // Complex {{{
+    #[derive(PartialEq, Copy, Clone, Debug, Default)]
+    pub struct Complex {
+        re: f64,
+        im: f64,
     }
-}
-pub fn ifft(x: &mut Vec<Complex>) {
-    let n = x.len();
-    for i in x.iter_mut() {
-        *i = i.conj();
+    impl Add for Complex {
+        type Output = Self;
+        fn add(self, other: Self) -> Self {
+            Self {
+                re: self.re + other.re,
+                im: self.im + other.im,
+            }
+        }
     }
-    fft(x);
-    for i in x.iter_mut() {
-        *i = i.conj();
-        i.re /= n as f64;
-        i.im /= n as f64;
+    impl Sub for Complex {
+        type Output = Self;
+        fn sub(self, other: Self) -> Self {
+            Self {
+                re: self.re - other.re,
+                im: self.im - other.im,
+            }
+        }
     }
-}
-pub fn convolution(mut x: Vec<Complex>, mut y: Vec<Complex>) -> Vec<Complex> {
-    let n = x.len() + y.len() - 1;
-    let mut sz = 1;
-    while sz < n {
-        sz *= 2;
+    impl Mul for Complex {
+        type Output = Self;
+        fn mul(self, other: Self) -> Self {
+            Self {
+                re: self.re * other.re - self.im * other.im,
+                im: self.im * other.re + self.re * other.im,
+            }
+        }
     }
-    x.resize_with(sz, Default::default);
-    y.resize_with(sz, Default::default);
-    fft(&mut x);
-    fft(&mut y);
-    for i in 0..sz {
-        x[i] = x[i] * y[i];
+    impl Complex {
+        fn conj(self) -> Self {
+            Self {
+                re: self.re,
+                im: -self.im,
+            }
+        }
     }
-    ifft(&mut x);
-    x.truncate(n);
-    x
+    // }}}
+    fn _fft(a: &mut [Complex], inv: bool) {
+        // Stockhamの変種とおもわれる
+        // https://satanic0258.github.io/snippets/math/FFT.html
+        let n = a.len();
+        assert!(n.is_power_of_two());
+        let mask = n - 1;
+        let lgn = n.trailing_zeros();
+        let mut a = a; // あとのbとライフタイムを揃える
+        let mut b = vec![Complex::default(); n].into_boxed_slice();
+        let mut b: &mut [Complex] = &mut b;
+        let theta0 = 2.0 * std::f64::consts::PI * if inv { -1.0 } else { 1.0 } / n as f64;
+
+        for _i in (0..lgn).rev() {
+            std::mem::swap(&mut a, &mut b);
+            let i = 1 << _i;
+            let theta = theta0 * i as f64;
+            let root = Complex {
+                re: theta.cos(),
+                im: theta.sin(),
+            };
+            let mut w = Complex { re: 1.0, im: 0.0 };
+            for j in (0..n).step_by(i) {
+                for k in 0..i {
+                    a[j + k] = b[(j * 2 & mask) + k] + b[((j * 2 + i) & mask) + k] * w;
+                }
+                w = w * root;
+            }
+        }
+        if lgn % 2 == 1 {
+            b.copy_from_slice(a);
+        }
+    }
+    pub fn fft(a: &mut [Complex]) {
+        _fft(a, false);
+    }
+    pub fn ifft(a: &mut [Complex]) {
+        _fft(a, true);
+        let n = a.len();
+        a.iter_mut().for_each(|x| {
+            x.re /= n as f64;
+            x.im /= n as f64;
+        });
+    }
+    pub fn convolution(mut x: Vec<Complex>, mut y: Vec<Complex>) -> Vec<Complex> {
+        let n = x.len() + y.len() - 1;
+        let sz = n.next_power_of_two();
+        x.resize_with(sz, Default::default);
+        y.resize_with(sz, Default::default);
+        fft(&mut x);
+        fft(&mut y);
+        for i in 0..sz {
+            x[i] = x[i] * y[i];
+        }
+        ifft(&mut x);
+        x.truncate(n);
+        x
+    }
 }

@@ -1,6 +1,6 @@
 use cargo_snippet::snippet;
 
-#[snippet("geometry")]
+#[snippet]
 mod geometry {
     use std::ops::*;
 

@@ -1,6 +1,7 @@
 use cargo_snippet::snippet;
-#[snippet("unionfind")]
+#[snippet]
 mod unionfind {
+    #[derive(Debug)]
     pub struct Unionfind {
         par: Vec<i32>,
         group_count: usize,
@@ -8,15 +9,17 @@ mod unionfind {
     impl Unionfind {
         pub fn new(n: usize) -> Self {
             Unionfind {
-                par: vec![-1; n as usize],
-                group_count: n as usize,
+                par: vec![-1; n],
+                group_count: n,
             }
         }
-        fn find_root(&mut self, mut x: usize) -> usize {
-            while self.par[x] >= 0 {
-                x = self.par[x] as usize;
+        fn find_root(&mut self, x: usize) -> usize {
+            if self.par[x] < 0 {
+                x
+            } else {
+                self.par[x] = self.find_root(self.par[x] as usize) as i32;
+                self.par[x] as usize
             }
-            x
         }
         pub fn unite(&mut self, x: usize, y: usize) {
             let mut rx = self.find_root(x);
