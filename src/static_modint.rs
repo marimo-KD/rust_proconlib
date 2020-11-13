@@ -36,11 +36,11 @@ pub mod static_modint {
             let mut res = Modint::one();
             let mut acc = self;
             while e > 0 {
-                if e % 2 != 0 {
+                if e & 1 == 1 {
                     res *= acc;
                 }
                 acc *= acc;
-                e /= 2;
+                e <<= 1;
             }
             res
         }
@@ -51,7 +51,7 @@ pub mod static_modint {
     impl<M: Mod> Neg for Modint<M> {
         type Output = Self;
         fn neg(self) -> Self::Output {
-            self * Self::new(M::M - 1)
+            self * Self::new_internal(M::M - 1)
         }
     }
     // {{{ operation
@@ -59,45 +59,50 @@ pub mod static_modint {
     impl<M: Mod, T: Into<Modint<M>>> Add<T> for Modint<M> {
         type Output = Self;
         fn add(self, rhs: T) -> Self {
-            let mut sum = self.x + rhs.into().x;
-            if sum >= M::M {
-                sum -= M::M;
-            }
-            Modint::new_internal(sum)
+            let mut ret = self.clone();
+            ret.add_assign(rhs);
+            ret
         }
     }
     impl<M: Mod, T: Into<Modint<M>>> Sub<T> for Modint<M> {
         type Output = Self;
         fn sub(self, rhs: T) -> Self {
-            let mut diff = self.x as i64 - rhs.into().x as i64;
-            if diff < 0 {
-                diff += M::M as i64;
-            }
-            Modint::new_internal(diff as u64)
+            let mut ret = self.clone();
+            ret.sub_assign(rhs);
+            ret
         }
     }
     impl<M: Mod, T: Into<Modint<M>>> Mul<T> for Modint<M> {
         type Output = Self;
         fn mul(self, rhs: T) -> Self {
-            Self::new(self.x.wrapping_mul(rhs.into().x))
-            // Self::new_internal((self.x * other.into().x) % M::M)
+            let mut ret = self.clone();
+            ret.mul_assign(rhs);
+            ret
         }
     }
     // }}}
     // {{{ compound
     impl<M: Mod, T: Into<Modint<M>>> AddAssign<T> for Modint<M> {
         fn add_assign(&mut self, rhs: T) {
-            *self = *self + rhs;
+            self.x += rhs.into().x;
+            if self.x >= M::M {
+                self.x -= M::M;
+            }
         }
     }
     impl<M: Mod, T: Into<Modint<M>>> SubAssign<T> for Modint<M> {
         fn sub_assign(&mut self, rhs: T) {
-            *self = *self - rhs;
+            let rhs = rhs.into();
+            if self.x < rhs.x {
+                self.x += M::M;
+            }
+            self.x -= rhs.x;
         }
     }
     impl<M: Mod, T: Into<Modint<M>>> MulAssign<T> for Modint<M> {
         fn mul_assign(&mut self, rhs: T) {
-            *self = *self * rhs;
+            self.x *= rhs.into().x;
+            self.x = M::modulo(self.x);
         }
     }
     // }}}
@@ -126,12 +131,12 @@ pub mod static_modint {
     //}}}
     impl<M: Mod> Zero for Modint<M> {
         fn zero() -> Self {
-            Self::new(0)
+            Self::new_internal(0)
         }
     }
     impl<M: Mod> One for Modint<M> {
         fn one() -> Self {
-            Self::new(1)
+            Self::new_internal(1)
         }
     }
     #[macro_export]
@@ -194,7 +199,7 @@ fn modint_test() {
 }
 #[test]
 fn modint_test_fac() {
-    use static_modint::{P1000000007, Mod};
+    use static_modint::{Mod, P1000000007};
     let mut a: u64 = 1;
     let mut b = ModInt::new(1);
     for i in 1..=10_000_000 {

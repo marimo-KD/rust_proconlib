@@ -33,7 +33,7 @@ mod ntt {
                 for k in 0..i {
                     a[j + k] = b[(j * 2 & mask) + k] + b[((j * 2 + i) & mask) + k] * w;
                 }
-                w = w * d;
+                w *= d;
             }
         }
         if lgn % 2 == 1 {

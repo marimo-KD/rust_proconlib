@@ -3,11 +3,11 @@ use std::*;
 
 // {{{
 pub mod scanner {
-    use std::cell::RefCell;
     use std::collections::VecDeque;
     use std::io;
     use std::io::BufRead;
-    use std::str::FromStr;
+    use std::iter::Peekable;
+    use std::str::{FromStr, SplitWhitespace};
     struct Tokenizer<T: BufRead> {
         source: T,
         tokens: VecDeque<String>,
@@ -48,15 +48,14 @@ pub mod scanner {
             self.tokenizer.next().unwrap().parse::<U>().ok().unwrap()
         }
     }
-    pub fn build_scanner() -> Scanner<io::StdinLock<'static>> {
-        let stdin = Box::leak(Box::new(io::stdin()));
-        Scanner {
-            tokenizer: Tokenizer::new(stdin.lock()),
+    impl Scanner<io::StdinLock<'static>> {
+        pub fn new_stdin() -> Self {
+            let stdin = Box::leak(Box::new(io::stdin()));
+            Scanner::new(stdin.lock())
         }
     }
 }
 macro_rules ! scan {($ scanner : ident ; [char ] ) => {$ scanner . scan ::< String > () . chars () . collect ::< Vec < _ >> () } ; ($ scanner : ident ; [u8 ] ) => {$ scanner . scan ::< String > () . bytes . collect ::< Vec < _ >> () } ; ($ scanner : ident ; [$ ($ t : tt ) ,+; $ n : expr ] ) => {(0 ..$ n ) . map (| _ | ($ (scan ! ($ scanner ;$ t ) ) ,* ) ) . collect ::< Vec < _ >> () } ; ($ scanner : ident ; $ t : ty ) => {$ scanner . scan ::<$ t > () } ; ($ scanner : ident ; $ ($ t : tt ) ,+ ) => {($ (scan ! ($ scanner ; $ t ) ) ,* ) } ; }
-
 // }}}
 
 //{{{
@@ -346,7 +345,7 @@ mod ntt {
 type ModInt = static_modint::Modint<ntt::P1224736769>;
 use alge::*;
 fn main() {
-    let mut stdin = scanner::build_scanner();
+    let mut stdin = scanner::Scanner::new_stdin();
     let n = scan!(stdin; usize);
     let mut a = vec![ModInt::zero(); n];
     let mut b = vec![ModInt::zero(); n];
