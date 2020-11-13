@@ -9,14 +9,12 @@ pub mod scanner {
 
     struct Tokenizer<T: BufRead> {
         source: T,
-        buf: Box<str>,
         token: Peekable<SplitWhitespace<'static>>,
     }
     impl<T: BufRead> Tokenizer<T> {
         fn new(source: T) -> Self {
             Self {
                 source,
-                buf: "".to_string().into_boxed_str(),
                 token: "".split_whitespace().peekable(),
             }
         }
@@ -26,15 +24,8 @@ pub mod scanner {
                 self.source
                     .read_line(&mut line)
                     .expect("Failed to get a line. Maybe an IO error occured");
-                self.buf = line.into_boxed_str();
-                // This code looks very dangerous.
-                // self.buf isn't move, so self.buf's address won't be changed.
-                // And self.buf's lifetime is longer than self.token.
-                // Therefore, actually, this code is safe.
-                // Self reference struct can't be defined safely. :(
-                self.token = unsafe { std::mem::transmute::<_, &'static str>(&*self.buf) }
-                    .split_whitespace()
-                    .peekable();
+                let buf: &'static str = Box::leak(line.into_boxed_str());
+                self.token = buf.split_whitespace().peekable();
             }
         }
         fn next(&mut self) -> Option<&str> {
@@ -42,33 +33,6 @@ pub mod scanner {
             self.token.next()
         }
     }
-    // struct Tokenizer<T: BufRead> {
-    //     source: T,
-    //     tokens: VecDeque<String>,
-    //     buf: String,
-    // }
-    // impl<T: BufRead> Tokenizer<T> {
-    //     fn new(source: T) -> Self {
-    //         Self {
-    //             source,
-    //             tokens: VecDeque::new(),
-    //             buf: String::new(),
-    //         }
-    //     }
-    // }
-    // impl<T: BufRead> Iterator for Tokenizer<T> {
-    //     type Item = String;
-    //     fn next(&mut self) -> Option<Self::Item> {
-    //         while self.tokens.is_empty() {
-    //             self.buf.clear();
-    //             self.source.read_line(&mut self.buf).unwrap();
-    //             for i in self.buf.split_whitespace() {
-    //                 self.tokens.push_back(String::from(i));
-    //             }
-    //         }
-    //         Some(self.tokens.pop_front().unwrap())
-    //     }
-    // }
     pub struct Scanner<T: BufRead> {
         tokenizer: Tokenizer<T>,
     }
