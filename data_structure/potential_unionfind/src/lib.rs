@@ -19,10 +19,9 @@ impl<M: Abel> WeightedUnionfind<M> {
         if self.par[x] < 0 {
             x
         } else {
-            let r = self.find_root(self.par[x] as usize);
-            self.diff_weight[x] = (self.diff_weight[x])
-                .clone()
-                .op(self.diff_weight[self.par[x] as usize].clone());
+            let p = self.par[x] as usize;
+            let r = self.find_root(p);
+            self.diff_weight[x].op_from_right(self.diff_weight[p].clone());
             self.par[x] = r as i32;
             r
         }
@@ -32,10 +31,10 @@ impl<M: Abel> WeightedUnionfind<M> {
         self.diff_weight[x].clone()
     }
     pub fn diff(&mut self, x: usize, y: usize) -> M {
-        self.weight(y).op(self.weight(x).inv())
+        M::op(self.weight(y), self.weight(x).inv())
     }
     pub fn merge(&mut self, x: usize, y: usize, w: M) -> Option<usize> {
-        let mut w = w.op(self.weight(x)).op(self.weight(y).inv());
+        let mut w = M::op(M::op(w, self.weight(x)), self.weight(y).inv());
         let mut x = self.find_root(x);
         let mut y = self.find_root(y);
         if x == y {

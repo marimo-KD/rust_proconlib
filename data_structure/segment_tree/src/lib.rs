@@ -1,27 +1,25 @@
 use algebra::*;
+use std::ops::{Range, RangeBounds};
 pub struct SegmentTree<T: Monoid> {
     data: Box<[T]>,
     len: usize,
 }
 impl<T: Monoid + Copy> SegmentTree<T> {
-    fn get_proper_size(len: usize) -> usize {
-        len.next_power_of_two()
-    }
     pub fn new(len: usize) -> Self {
-        let len = Self::get_proper_size(len);
+        let len = len.next_power_of_two();
         Self {
             data: vec![T::identity(); 2 * len].into_boxed_slice(),
             len,
         }
     }
     pub fn new_with_init(&mut self, initializer: &Vec<T>) {
-        let len = Self::get_proper_size(initializer.len());
+        let len = initializer.len().next_power_of_two();
         let mut data = vec![T::identity(); 2 * len].into_boxed_slice();
         for (idx, val) in initializer.iter().enumerate() {
             data[idx + len] = val.clone();
         }
         for i in (1..len).rev() {
-            data[i] = data[2 * i].op(data[2 * i + 1]);
+            data[i] = T::op(data[2 * i], data[2 * i + 1]);
         }
         self.len = len;
         self.data = data;
@@ -31,7 +29,7 @@ impl<T: Monoid + Copy> SegmentTree<T> {
         self.data[idx] = x.clone();
         idx /= 2;
         while idx > 0 {
-            self.data[idx] = self.data[2 * idx].op(self.data[2 * idx + 1]);
+            self.data[idx] = T::op(self.data[2 * idx], self.data[2 * idx + 1]);
             idx /= 2;
         }
     }
@@ -40,17 +38,17 @@ impl<T: Monoid + Copy> SegmentTree<T> {
         let (mut l, mut r) = (a + self.len, b + self.len);
         while l < r {
             if l % 2 == 1 {
-                vl = vl.op(self.data[l]);
+                vl.op_from_right(self.data[l]);
                 l += 1;
             }
             if r % 2 == 1 {
                 r -= 1;
-                vr = self.data[r].op(vr);
+                vr.op_from_left(self.data[r]);
             }
             l /= 2;
             r /= 2;
         }
-        vl.op(vr)
+        T::op(vl, vr)
     }
 }
 impl<T: Monoid> std::ops::Index<usize> for SegmentTree<T> {

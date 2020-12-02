@@ -6,14 +6,11 @@ pub trait Element: Sized + Clone + PartialEq + fmt::Debug {}
 impl<T: Sized + Clone + PartialEq + fmt::Debug> Element for T {}
 
 /// 加法が定義されています。
-/// さすがに加法に単位元が無いと嫌な気持ちになりますよね？
-/// なので単位元もついてます。
 pub trait Zero: ops::Add<Output = Self> + ops::AddAssign + Element {
     // 単位元です。
     fn zero() -> Self;
 }
 
-/// さっきとだいたい同じです。
 /// 乗法です。
 pub trait One: ops::Mul<Output = Self> + ops::MulAssign + Element {
     fn one() -> Self;
@@ -24,33 +21,47 @@ pub trait One: ops::Mul<Output = Self> + ops::MulAssign + Element {
 pub trait Ring: Zero + One + ops::Neg + ops::Sub<Output = Self> + ops::SubAssign {}
 impl<T: Zero + One + ops::Neg + ops::Sub<Output = Self> + ops::SubAssign> Ring for T {}
 
-/// 二項演算を持つ構造の基本です。
-/// 結合法則ぐらいは持っていてほしいですね。
-/// つまりは半群のことです。
-pub trait Semigroup: Element {
-    fn op(self, rhs: Self) -> Self;
-    fn op_from_left(&mut self, left: &Self) {
-        *self = Self::op(left.clone(), self.clone());
+/// 二項演算があります。
+pub trait Magma: Element {
+    fn op(lhs: Self, rhs: Self) -> Self;
+    fn op_from_left(&mut self, left: Self) {
+        *self = Self::op(left, self.clone());
     }
-    fn op_from_right(&mut self, right: &Self) {
-        *self = Self::op(self.clone(), right.clone());
+    fn op_from_right(&mut self, right: Self) {
+        *self = Self::op(self.clone(), right);
     }
 }
+/// 半群です。(結合性ですね。)
+pub trait Semigroup: Magma {}
+
+/// 単位元です。
+pub trait Identity {
+    fn identity() -> Self;
+}
+
+/// 擬群です。
+/// 逆元があることです。
+pub trait Quasigroup: Magma {
+    fn inv(self) -> Self;
+}
+
+/// Loopです。
+/// 擬群に単位元がつきました。
+pub trait Loop: Quasigroup + Identity {}
+impl<T: Quasigroup + Identity> Loop for T {}
 
 /// 単位元のある二項演算を持つ構造です。
 /// つまりはモノイドのことです。
-pub trait Monoid: Semigroup {
-    fn identity() -> Self;
-}
+pub trait Monoid: Semigroup + Identity {}
+impl<T: Semigroup + Identity> Monoid for T {}
 
 /// 結合、可換の二項演算があります。
 pub trait Commut: Semigroup {}
 
 /// はい、群です。
 /// つまりは、結合、単位元、逆元があります。
-pub trait Group: Monoid {
-    fn inv(self) -> Self;
-}
+pub trait Group: Monoid + Loop {}
+impl<T: Monoid + Loop> Group for T {}
 
 /// 可換な群です。
 pub trait Abel: Group {}
@@ -81,17 +92,18 @@ macro_rules! impl_zero_integer {
     }
 macro_rules! impl_abel_integer {
         ($t: ty) => {
-            impl Semigroup for $t {
-                fn op(self, rhs: Self) ->Self {
-                    self + rhs
+            impl Magma for $t {
+                fn op(lhs: Self, rhs: Self) ->Self {
+                    lhs + rhs
                 }
             }
-            impl Monoid for $t {
+            impl Semigroup for $t {}
+            impl Identity for $t {
                 fn identity() -> Self {
                     0 as $t
                 }
             }
-            impl Group for $t {
+            impl Quasigroup for $t {
                 fn inv(self) -> Self {
                     -self
                 }

@@ -19,7 +19,7 @@ impl Unionfind {
         }
     }
     pub fn unite(&mut self, x: usize, y: usize) -> Option<usize> {
-        /// return: new root
+        //! return: new root
         assert!(x < self.par.len() && y < self.par.len());
         let mut rx = self.find_root(x);
         let mut ry = self.find_root(y);
