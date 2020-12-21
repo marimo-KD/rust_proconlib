@@ -5,12 +5,11 @@ pub trait NTTableMod: Mod {
 }
 fn _ntt<M: NTTableMod>(a: &mut [Modint<M>], g: Modint<M>) {
     //! https://satanic0258.github.io/snippets/math/FFT.html
-    //! Stockham$B$NJQ<o$H$*$b$o$l$k(B
+    //! Stockhamの変種と思われる
     let n = a.len();
-    assert!(n.is_power_of_two());
     let mask = n - 1;
     let lgn = n.trailing_zeros();
-    let mut a = a; // $B$"$H$N(Bb$B$H%i%$%U%?%$%`$rB7$($k(B
+    let mut a = a; // bとライフタイムをあわせる
     let mut b = vec![Modint::zero(); n].into_boxed_slice();
     let mut b: &mut [Modint<M>] = &mut b;
     let root = g.pow((M::M - 1) / n as u64);
@@ -22,7 +21,7 @@ fn _ntt<M: NTTableMod>(a: &mut [Modint<M>], g: Modint<M>) {
         let mut w = Modint::one();
         for j in (0..n).step_by(i) {
             for k in 0..i {
-                a[j + k] = b[(j * 2 & mask) + k] + b[((j * 2 + i) & mask) + k] * w;
+                a[j + k] = b[((j >> 1) & mask) + k] + b[(((j >> 1) + i) & mask) + k] * w;
             }
             w *= d;
         }
@@ -56,8 +55,11 @@ pub fn convolution<M: NTTableMod>(mut x: Vec<Modint<M>>, mut y: Vec<Modint<M>>) 
     x.truncate(n);
     x
 }
+
+#[macro_export]
 macro_rules! define_nttable_mod {
     ($struct_name:ident, $modulo:expr, $root: expr) => {
+        $crate::define_mod!($struct_name, $modulo);
         impl NTTableMod for $struct_name {
             const PRIMITIVE_ROOT: u64 = $root;
         }

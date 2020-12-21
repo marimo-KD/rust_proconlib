@@ -12,7 +12,7 @@ impl<T: Monoid + Copy> SegmentTree<T> {
             len,
         }
     }
-    pub fn new_with_init(&mut self, initializer: &Vec<T>) {
+    pub fn new_with_init(initializer: &[T]) -> Self {
         let len = initializer.len().next_power_of_two();
         let mut data = vec![T::identity(); 2 * len].into_boxed_slice();
         for (idx, val) in initializer.iter().enumerate() {
@@ -21,12 +21,11 @@ impl<T: Monoid + Copy> SegmentTree<T> {
         for i in (1..len).rev() {
             data[i] = T::op(data[2 * i], data[2 * i + 1]);
         }
-        self.len = len;
-        self.data = data;
+        Self { data, len }
     }
-    pub fn set(&mut self, mut idx: usize, x: &T) {
+    pub fn set(&mut self, mut idx: usize, x: T) {
         idx += self.len;
-        self.data[idx] = x.clone();
+        self.data[idx] = x;
         idx /= 2;
         while idx > 0 {
             self.data[idx] = T::op(self.data[2 * idx], self.data[2 * idx + 1]);
@@ -60,17 +59,16 @@ impl<T: Monoid> std::ops::Index<usize> for SegmentTree<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use algebra_struct::*;
     #[test]
     fn rsq() {
         let mut st = SegmentTree::new(10);
-        st.set(1, &algebra_struct::AddMonoid(4));
+        st.set(1, algebra_struct::AddMonoid(4));
         assert_eq!(st.query(0, 5), AddMonoid(4));
-        st.set(8, &AddMonoid(4));
+        st.set(8, AddMonoid(4));
         assert_eq!(st.query(0, 5), AddMonoid(4));
-        st.set(0, &AddMonoid(4));
+        st.set(0, AddMonoid(4));
         assert_eq!(st.query(0, 5), AddMonoid(8));
-        st.set(4, &AddMonoid(4));
+        st.set(4, AddMonoid(4));
         assert_eq!(st.query(0, 5), AddMonoid(12));
     }
 }

@@ -1,9 +1,9 @@
 use algebra::{One, Zero};
-use std::ops::*;
+use std::{ops::*, str::FromStr, num::ParseIntError};
 pub trait Mod: Copy + std::fmt::Debug + PartialEq {
     const M: u64;
     const S: u64;
-    const X: u64;
+    const X: u128;
     fn div(x: u64) -> u64;
     fn modulo(x: u64) -> u64;
 }
@@ -22,21 +22,24 @@ impl<M: Mod> Modint<M> {
             phantom: std::marker::PhantomData,
         }
     }
+    #[inline(always)]
     pub fn value(self) -> u64 {
         self.x
     }
     pub fn pow(self, mut e: u64) -> Self {
         let mut res = Modint::one();
         let mut acc = self;
+        e = M::div(e) + M::modulo(e);
         while e > 0 {
             if e & 1 == 1 {
                 res *= acc;
             }
             acc *= acc;
-            e <<= 1;
+            e >>= 1;
         }
         res
     }
+    #[inline]
     pub fn inv(self) -> Self {
         self.pow(M::M - 2)
     }
@@ -116,9 +119,21 @@ impl<M: Mod> From<i32> for Modint<M> {
         Self::from(x as i64)
     }
 }
+impl<M: Mod> From<u32> for Modint<M> {
+    fn from(x: u32) -> Self {
+        Self::new(x as u64)
+    }
+}
 impl<M: Mod> From<usize> for Modint<M> {
     fn from(x: usize) -> Self {
         Self::new(x as u64)
+    }
+}
+impl<M: Mod> FromStr for Modint<M> {
+    type Err = ParseIntError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let x = s.parse::<u64>()?;
+        Ok(Self::new(x))
     }
 }
 //}}}
@@ -143,40 +158,38 @@ const fn _next_power_of_two(mut x: u64) -> u64 {
     x += 1;
     x
 }
-const fn _calc_s(m: u64) -> u64 {
+pub const fn _calc_s(m: u64) -> u64 {
     let log = m.wrapping_sub(1);
     let log = _next_power_of_two(log).trailing_zeros() as u64;
     let s = [log.wrapping_sub(1), log][m.wrapping_sub(1).is_power_of_two() as usize];
     [s + 64, 0][(m == 1) as usize]
 }
+
+#[macro_export]
 macro_rules! define_mod {
     ($struct_name:ident, $modulo:expr) => {
         #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
         pub struct $struct_name {}
         impl Mod for $struct_name {
             const M: u64 = $modulo;
-            const S: u64 = _calc_s(Self::M);
-            const X: u64 = {
+            const S: u64 = $crate::_calc_s(Self::M);
+            const X: u128 = {
                 let s = Self::S as u32;
                 let m = Self::M as u128;
-                (((1 as u128).wrapping_shl(s).wrapping_add(m).wrapping_sub(1)) / m) as u64
+                ((1 as u128).wrapping_shl(s).wrapping_add(m).wrapping_sub(1)) / m
             };
             fn div(x: u64) -> u64 {
-                (((x as u128) * Self::X as u128).wrapping_shr(Self::S as u32)) as u64
+                (((x as u128) * Self::X).wrapping_shr(Self::S as u32)) as u64
             }
             fn modulo(x: u64) -> u64 {
                 x.wrapping_sub(Self::div(x) * Self::M)
             }
-            // $B5U?t>h;;(B
-            // Barrett reduction$B$J$k$b$N$K6a$$$s$@$H$+(B
+            // 逆数乗算
         }
     };
 }
 define_mod!(P1000000007, 1_000_000_007);
 define_mod!(P998244353, 998244353);
-define_mod!(P1224736769, 1224736769);
-define_mod!(P469762049, 469762049);
-define_mod!(P167772161, 167772161);
 
 #[cfg(test)]
 mod tests {

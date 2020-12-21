@@ -1,0 +1,5 @@
+/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/target/debug/examples/yosupo_rectangle_sum-9670754c22b39367: data_structure/persistent_segment_tree/examples/yosupo_rectangle_sum.rs
+
+/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/target/debug/examples/yosupo_rectangle_sum-9670754c22b39367.d: data_structure/persistent_segment_tree/examples/yosupo_rectangle_sum.rs
+
+data_structure/persistent_segment_tree/examples/yosupo_rectangle_sum.rs:

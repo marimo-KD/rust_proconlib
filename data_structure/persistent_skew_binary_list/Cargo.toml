@@ -1,0 +1,12 @@
+[package]
+name = "persistent_skew_binary_list"
+version = "0.1.0"
+authors = ["marimo-KD <marimo.for.others@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+[dev-dependencies]
+rand = "0.7"

@@ -3,4 +3,5 @@ members = [
   "algorithm/*",
   "data_structure/*",
   "utility/*",
+  "verification/*",
 ]

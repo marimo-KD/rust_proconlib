@@ -1,29 +1,33 @@
-use std::io;
 use std::io::BufRead;
 use std::str::{FromStr, SplitWhitespace};
+use std::thread_local;
+use std::{cell::RefCell, io};
 
+pub trait Readable {
+    type Output;
+    fn read(input: &str) -> Self::Output;
+}
+impl<T: FromStr> Readable for T {
+    type Output = Self;
+    fn read(input: &str) -> Self::Output {
+        input.parse().ok().unwrap()
+    }
+}
 struct Tokenizer<T: BufRead> {
     source: T,
     token: SplitWhitespace<'static>,
 }
 impl<T: BufRead> Tokenizer<T> {
-    fn new(source: T) -> Self {
-        Self {
-            source,
-            token: "".split_whitespace(),
-        }
-    }
     fn read(&mut self) {
         let mut line = String::new();
         self.source
             .read_line(&mut line)
-            .expect("Failed to get a line. Maybe an IO error occured");
-        let buf: &'static str = Box::leak(line.into_boxed_str());
-        self.token = buf.split_whitespace();
+            .expect("an IO error occured");
+        self.token = Box::leak(line.into_boxed_str()).split_whitespace();
     }
-    fn next(&mut self) -> Option<&str> {
+    fn next(&mut self) -> &str {
         if let Some(x) = self.token.next() {
-            Some(x)
+            x
         } else {
             self.read();
             self.next()
@@ -36,45 +40,57 @@ pub struct Scanner<T: BufRead> {
 impl<T: BufRead> Scanner<T> {
     pub fn new(source: T) -> Self {
         Self {
-            tokenizer: Tokenizer::new(source),
+            tokenizer: Tokenizer {
+                source,
+                token: "".split_whitespace(),
+            },
         }
     }
-    pub fn scan<U: FromStr>(&mut self) -> U {
-        self.tokenizer.next().unwrap().parse::<U>().ok().unwrap()
+    pub fn scan<U: Readable>(&mut self) -> U::Output {
+        U::read(self.tokenizer.next())
     }
 }
-impl Scanner<io::StdinLock<'static>> {
-    pub fn new_stdin() -> Self {
+
+thread_local! (
+    pub static STDIN: RefCell<Scanner<std::io::StdinLock<'static>>> = {
         let stdin = Box::leak(Box::new(io::stdin()));
-        Scanner::new(stdin.lock())
+        RefCell::new(Scanner::new(stdin.lock()))
     }
-}
+);
 #[macro_export]
 macro_rules! scan {
-    ($scanner:ident; [char]) => {
-        $scanner.scan::<String>().chars().collect::<Vec<_>>()
+    ([char]) => {
+        STDIN.with(|stdin| stdin.borrow_mut().scan::<String>().chars().collect::<Vec<_>>())
     };
-    ($scanner:ident; [u8]) => {
-        $scanner.scan::<String>().bytes().collect::<Vec<_>>()
+    ([u8]) => {
+        STDIN.with(|stdin| stdin.borrow_mut().scan::<String>().bytes().collect::<Vec<_>>())
     };
-    ($scanner:ident; [$($t:tt),+; $n:expr]) => {
-        (0..$n).map(|_| ($(scan!($scanner;$t)),*)).collect::<Vec<_>>()
+    ([$($t:tt),*; $n:expr]) => {
+        (0..$n).map(|_| ($(scan!($t)),*)).collect::<Vec<_>>()
     };
-    ($scanner:ident; usize1) => {
-        $scanner.scan::<usize>() - 1
+    ($t:ty) => {
+        STDIN.with(|stdin| stdin.borrow_mut().scan::<$t>())
     };
-    ($scanner:ident; $t:ty) => {
-        $scanner.scan::<$t>()
+    ($($t:ty),+) => {
+        ($(scan!($t)),*)
     };
-    ($scanner:ident; $($t:tt),+) => {
-        ($(scan!($scanner; $t)),*)
-    };
+}
+
+#[allow(non_camel_case_types)]
+pub struct usize1();
+impl Readable for usize1 {
+    type Output = usize;
+    fn read(input: &str) -> Self::Output {
+        input.parse::<usize>().unwrap() - 1
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
     fn scanner_test() {
-        let mut stdin = Scanner::new_stdin();
+        let a = scan!(usize);
+        let _a = scan!([usize1; a]);
     }
 }

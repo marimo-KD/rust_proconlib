@@ -1,0 +1,30 @@
+[package]
+name = "library-checker"
+version = "0.1.0"
+authors = ["marimo-KD <marimo.for.others@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+algebra = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/utility/algebra" }
+algebra_struct = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/utility/algebra_struct" }
+bit_vector = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/data_structure/bit_vector" }
+combination = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/utility/combination" }
+fenwick_tree = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/data_structure/fenwick_tree" }
+fft = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/algorithm/fft" }
+fps = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/utility/fps" }
+geometry = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/utility/geometry" }
+lazy_segment_tree = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/data_structure/lazy_segment_tree" }
+mo = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/algorithm/mo" }
+my_range = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/utility/my_range" }
+ntt = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/algorithm/ntt" }
+partly_persistent_unionfind = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/data_structure/partly_persistent_unionfind" }
+persistent_segment_tree = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/data_structure/persistent_segment_tree" }
+potential_unionfind = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/data_structure/potential_unionfind" }
+run_length_encoding = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/algorithm/run_length_encoding" }
+scanner = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/utility/scanner" }
+segment_tree = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/data_structure/segment_tree" }
+static_modint = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/utility/static_modint" }
+unionfind = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/data_structure/unionfind" }
+wavelet_matrix = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/data_structure/wavelet_matrix" }
