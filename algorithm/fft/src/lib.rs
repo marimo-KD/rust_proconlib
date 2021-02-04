@@ -1,4 +1,4 @@
-use std::ops::{Add, Div, Mul, Sub};
+use std::ops::{Add, Mul, Sub};
 
 // Complex {{{
 #[derive(PartialEq, Copy, Clone, Debug, Default)]
@@ -33,18 +33,10 @@ impl Mul for Complex {
         }
     }
 }
-impl Complex {
-    fn conj(self) -> Self {
-        Self {
-            re: self.re,
-            im: -self.im,
-        }
-    }
-}
 // }}}
 fn _fft(a: &mut [Complex], inv: bool) {
     //! https://satanic0258.github.io/snippets/math/FFT.html
-    //! Stockham$B$NJQ<o$H$*$b$o$l$k(B
+    //! Stockhamの変種と思われる。
     let n = a.len();
     assert!(n.is_power_of_two());
     let mask = n - 1;

@@ -8,3 +8,5 @@ edition = "2018"
 
 [dependencies]
 algebra = { path = "../algebra" }
+ntt = { path = "../../algorithm/ntt" }
+static_modint = { path = "../static_modint" }

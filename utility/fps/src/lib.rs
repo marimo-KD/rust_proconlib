@@ -1,94 +1,64 @@
-use algebra::*;
-use std::ops::*;
+use algebra::Ring;
+
+pub mod ops;
 #[derive(Debug, Clone)]
 pub struct FormalPowerSeries<T: Ring + Copy> {
     data: Vec<T>,
+    convoluter: fn(Vec<T>, Vec<T>) -> Vec<T>,
 }
 impl<T: Ring + Copy> FormalPowerSeries<T> {
-    pub fn new(init: Vec<T>) -> Self {
-        let mut ret = Self { data: init };
-        ret.remove_trailing_zeros();
-        ret
-    }
     pub fn leak(&self) -> &Vec<T> {
         &self.data
     }
-    fn extend(&mut self, x: &Self) {
+    pub fn leak_mut(&mut self) -> &mut Vec<T> {
+        &mut self.data
+    }
+    pub fn into_inner(self) -> Vec<T> {
         self.data
-            .resize(self.data.len().max(x.data.len()), T::zero());
     }
-    fn remove_trailing_zeros(&mut self) {
-        while *self.data.last().unwrap() == T::zero() {
-            self.data.pop();
-        }
-    }
-    fn len(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.data.len()
     }
-}
-impl<T: Ring + Copy> FormalPowerSeries<T> {
-    pub fn naive_mul(&self, rhs: &Self) -> Self {
-        if self.data.is_empty() && rhs.data.is_empty() {
-            return Self::zero();
-        }
-        let mut ret = Self::new(vec![T::zero(); self.len() + rhs.len()]);
-        for (i, &x) in self.data.iter().enumerate() {
-            for (j, &y) in rhs.data.iter().enumerate() {
-                ret.data[i + j] += x * y;
-            }
-        }
+    pub fn is_empty(&self) -> bool {
+        self.data.is_empty()
+    }
+    fn new(init: Vec<T>, convoluter: fn(Vec<T>, Vec<T>) -> Vec<T>) -> Self {
+        let mut ret = Self { data: init , convoluter};
         ret.remove_trailing_zeros();
         ret
+    }
+    fn extend(&mut self, x: &Self) {
+        self.data.resize(self.len().max(x.len()), T::zero());
+    }
+    fn remove_trailing_zeros(&mut self) {
+        while *self.leak().last().unwrap() == T::zero() {
+            self.leak_mut().pop();
+        }
     }
 }
 impl<T: Ring + Copy> PartialEq for FormalPowerSeries<T> {
     fn eq(&self, rhs: &Self) -> bool {
-        if self.data.len() != rhs.data.len() {
+        if self.len() != rhs.len() {
             return false;
         }
-        self.data.iter().zip(rhs.data.iter()).all(|(&x, &y)| x == y)
+        self.leak()
+            .iter()
+            .zip(rhs.leak().iter())
+            .all(|(&x, &y)| x == y)
     }
 }
-// {{{ Ops
-impl<T: Ring + Copy> Add for FormalPowerSeries<T> {
-    type Output = Self;
-    fn add(self, rhs: Self) -> Self::Output {
-        let mut ret = self.clone();
-        ret.add_assign(rhs);
-        ret
-    }
-}
-impl<T: Ring + Copy> AddAssign for FormalPowerSeries<T> {
-    fn add_assign(&mut self, rhs: Self) {
-        self.extend(&rhs);
-        for (i, &v) in rhs.data.iter().enumerate() {
-            self.data[i] += v;
-        }
-        self.remove_trailing_zeros();
-    }
-}
-impl<T: Ring + Copy> Sub for FormalPowerSeries<T> {
-    type Output = Self;
-    fn sub(self, rhs: Self) -> Self::Output {
-        let mut ret = self.clone();
-        ret.sub_assign(rhs);
-        ret
-    }
-}
-impl<T: Ring + Copy> SubAssign for FormalPowerSeries<T> {
-    fn sub_assign(&mut self, rhs: Self) {
-        self.extend(&rhs);
-        for (i, &v) in rhs.data.iter().enumerate() {
-            self.data[i] -= v;
-        }
-        self.remove_trailing_zeros();
-    }
-}
-// }}}
-impl<T: Ring + Copy> Zero for FormalPowerSeries<T> {
-    fn zero() -> Self {
-        Self { data: Vec::new() }
-    }
+
+#[macro_export]
+macro_rules! fps {
+    ($vec:expr) => {
+        FormalPowerSeries::new($vec, $crate::ops::naive_mul)
+    };
+    ($vec:expr, ntt) => {
+        FormalPowerSeries::new($vec, $crate::ops::fast_mul)
+    };
+    ($vec:expr, $conv:ident) => {
+        FormalPowerSeries::new($vec, $conv)
+    };
 }
 
 #[cfg(test)]
@@ -96,10 +66,8 @@ mod tests {
     use super::*;
     #[test]
     fn fps_add_test() {
-        type FPS = FormalPowerSeries<i32>;
-        let a = FPS::new(vec![1, 2, 3]);
-        let b = FPS::new(vec![1, 2, 3]);
-        let c = a + b;
-        assert_eq!(*c.leak(), vec![2, 4, 6]);
+        let a = fps!(vec![1, 2, 3]);
+        let b = fps!(vec![1, 2, 3]);
+        let _c = a + b;
     }
 }

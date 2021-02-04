@@ -73,6 +73,7 @@ where
         self.recalc(a);
         self.recalc(b);
     }
+    #[allow(non_snake_case)]
     pub fn query(&mut self, l: usize, r: usize) -> T {
         if l >= r {
             return T::identity();

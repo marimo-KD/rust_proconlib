@@ -1,5 +1,5 @@
 use algebra::*;
-use std::ops::{Range, RangeBounds};
+use std::ops::Range;
 pub struct SegmentTree<T: Monoid> {
     data: Box<[T]>,
     len: usize,
@@ -32,9 +32,9 @@ impl<T: Monoid + Copy> SegmentTree<T> {
             idx /= 2;
         }
     }
-    pub fn query(&self, a: usize, b: usize) -> T {
+    pub fn query(&self, q: Range<usize>) -> T {
         let (mut vl, mut vr) = (T::identity(), T::identity());
-        let (mut l, mut r) = (a + self.len, b + self.len);
+        let (mut l, mut r) = (q.start + self.len, q.end + self.len);
         while l < r {
             if l % 2 == 1 {
                 vl.op_from_right(self.data[l]);
@@ -59,16 +59,17 @@ impl<T: Monoid> std::ops::Index<usize> for SegmentTree<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use algebra_struct::AddMonoid;
     #[test]
     fn rsq() {
         let mut st = SegmentTree::new(10);
         st.set(1, algebra_struct::AddMonoid(4));
-        assert_eq!(st.query(0, 5), AddMonoid(4));
+        assert_eq!(st.query(0..5), AddMonoid(4));
         st.set(8, AddMonoid(4));
-        assert_eq!(st.query(0, 5), AddMonoid(4));
+        assert_eq!(st.query(0..5), AddMonoid(4));
         st.set(0, AddMonoid(4));
-        assert_eq!(st.query(0, 5), AddMonoid(8));
+        assert_eq!(st.query(0..5), AddMonoid(8));
         st.set(4, AddMonoid(4));
-        assert_eq!(st.query(0, 5), AddMonoid(12));
+        assert_eq!(st.query(0..5), AddMonoid(12));
     }
 }

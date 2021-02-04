@@ -16,6 +16,10 @@ name = "binary_search"
 version = "0.1.0"
 
 [[package]]
+name = "binary_trie"
+version = "0.1.0"
+
+[[package]]
 name = "bit_vector"
 version = "0.1.0"
 
@@ -26,11 +30,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
 
 [[package]]
+name = "chminmax"
+version = "0.1.0"
+
+[[package]]
 name = "combination"
 version = "0.1.0"
 dependencies = [
  "static_modint",
 ]
+
+[[package]]
+name = "cuckoo_hashing"
+version = "0.1.0"
 
 [[package]]
 name = "extended_gcd"
@@ -49,6 +61,16 @@ name = "fps"
 version = "0.1.0"
 dependencies = [
  "algebra",
+ "ntt",
+ "static_modint",
+]
+
+[[package]]
+name = "fps_diff"
+version = "0.1.0"
+dependencies = [
+ "algebra",
+ "fps",
 ]
 
 [[package]]
@@ -85,11 +107,17 @@ version = "0.1.0"
 dependencies = [
  "algebra",
  "algebra_struct",
+ "binary_search",
+ "binary_trie",
  "bit_vector",
+ "chminmax",
  "combination",
+ "cuckoo_hashing",
+ "extended_gcd",
  "fenwick_tree",
  "fft",
  "fps",
+ "fps_diff",
  "geometry",
  "lazy_segment_tree",
  "mo",
@@ -97,10 +125,13 @@ dependencies = [
  "ntt",
  "partly_persistent_unionfind",
  "persistent_segment_tree",
+ "persistent_skew_binary_list",
  "potential_unionfind",
+ "randomized_binary_search_tree",
  "run_length_encoding",
  "scanner",
  "segment_tree",
+ "splay_tree",
  "static_modint",
  "unionfind",
  "wavelet_matrix",
@@ -156,10 +187,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ac74c624d6b2d21f425f752262f42188365d7b8ff1aff74c82e45136510a4857"
 
 [[package]]
-name = "putter"
-version = "0.1.0"
-
-[[package]]
 name = "rand"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -201,6 +228,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "randomized_binary_search_tree"
+version = "0.1.0"
+dependencies = [
+ "algebra",
+ "algebra_struct",
+ "my_range",
+]
+
+[[package]]
 name = "run_length_encoding"
 version = "0.1.0"
 
@@ -214,6 +250,15 @@ version = "0.1.0"
 dependencies = [
  "algebra",
  "algebra_struct",
+]
+
+[[package]]
+name = "splay_tree"
+version = "0.1.0"
+dependencies = [
+ "algebra",
+ "algebra_struct",
+ "my_range",
 ]
 
 [[package]]

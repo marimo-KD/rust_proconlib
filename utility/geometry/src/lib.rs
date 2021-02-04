@@ -1,6 +1,6 @@
 use std::ops::*;
 #[derive(Debug, Copy, Clone, PartialOrd, PartialEq, Ord, Eq, Default)]
-struct Point<T> {
+pub struct Point<T> {
     x: T,
     y: T,
 }
@@ -46,13 +46,11 @@ impl<T> From<(T, T)> for Point<T> {
         Self { x: a.0, y: a.1 }
     }
 }
-// へた、へただなぁ…
-// 抽象化の実装の仕方がへた…へたっぴさ…
-trait Abs {
+pub trait Abs {
     fn abs(self) -> Self;
 }
 impl<T: Default> Point<T> {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Default::default()
     }
 }
@@ -60,23 +58,23 @@ impl<T: Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Into<f64> + Abs + 
     Point<T>
 {
     #[inline]
-    fn dot(self, other: Self) -> T {
+    pub fn dot(self, other: Self) -> T {
         self.x * other.x + self.y * other.y
     }
     #[inline]
-    fn cross(self, other: Self) -> T {
+    pub fn cross(self, other: Self) -> T {
         self.x * other.y - self.y * other.x
     }
     #[inline]
-    fn norm(self) -> f64 {
+    pub fn norm(self) -> f64 {
         (self.x * self.x + self.y * self.y).into().sqrt()
     }
     #[inline]
-    fn l1norm(self) -> T {
+    pub fn l1norm(self) -> T {
         self.x.abs() + self.y.abs()
     }
     #[inline]
-    fn linfnorm(self) -> T {
+    pub fn linfnorm(self) -> T {
         self.x.abs().max(self.y.abs())
     }
 }

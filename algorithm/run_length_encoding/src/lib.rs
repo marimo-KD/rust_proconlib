@@ -1,4 +1,4 @@
-fn run_length_encoding(s: &str) -> Vec<(char, i32)> {
+pub fn run_length_encoding(s: &str) -> Vec<(char, i32)> {
     let mut res: Vec<(char, i32)> = Vec::new();
     s.chars().for_each(|c| match &mut res.last_mut() {
         Some(t) => {

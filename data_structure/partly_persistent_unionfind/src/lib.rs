@@ -25,7 +25,7 @@ impl PartlyPersistentUnionfind {
         self.find_root(t, x) == self.find_root(t, y)
     }
     pub fn unite(&mut self, x: usize, y: usize) -> Option<(usize, usize)> {
-        /// return: Option<(time, new root)>
+        //! return: Option<(time, new root)>
         let mut x = self.find_root(self.now, x);
         let mut y = self.find_root(self.now, y);
         if x == y {

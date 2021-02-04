@@ -1,5 +1,5 @@
 use algebra::{One, Zero};
-use std::{ops::*, str::FromStr, num::ParseIntError};
+use std::{num::ParseIntError, ops::*, str::FromStr};
 pub trait Mod: Copy + std::fmt::Debug + PartialEq {
     const M: u64;
     const S: u64;
@@ -54,26 +54,23 @@ impl<M: Mod> Neg for Modint<M> {
 // {{{ binary operation
 impl<M: Mod, T: Into<Modint<M>>> Add<T> for Modint<M> {
     type Output = Self;
-    fn add(self, rhs: T) -> Self {
-        let mut ret = self.clone();
-        ret.add_assign(rhs);
-        ret
+    fn add(mut self, rhs: T) -> Self {
+        self.add_assign(rhs);
+        self
     }
 }
 impl<M: Mod, T: Into<Modint<M>>> Sub<T> for Modint<M> {
     type Output = Self;
-    fn sub(self, rhs: T) -> Self {
-        let mut ret = self.clone();
-        ret.sub_assign(rhs);
-        ret
+    fn sub(mut self, rhs: T) -> Self {
+        self.sub_assign(rhs);
+        self
     }
 }
 impl<M: Mod, T: Into<Modint<M>>> Mul<T> for Modint<M> {
     type Output = Self;
-    fn mul(self, rhs: T) -> Self {
-        let mut ret = self.clone();
-        ret.mul_assign(rhs);
-        ret
+    fn mul(mut self, rhs: T) -> Self {
+        self.mul_assign(rhs);
+        self
     }
 }
 // }}}

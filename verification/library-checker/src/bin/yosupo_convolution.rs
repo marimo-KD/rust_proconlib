@@ -4,10 +4,11 @@ use scanner::*;
 use ntt::*;
 use static_modint::Modint;
 
+type Mint = Modint<ntt::P998244353>;
 fn main(){
     let (n, m) = scan!(usize, usize);
-    let a = scan!([Modint<ntt::P998244353>; n]);
-    let b = scan!([Modint<ntt::P998244353>; m]);
+    let a = scan!([Mint; n]);
+    let b = scan!([Mint; m]);
     let c = convolution(a, b);
     let out = stdout();
     let mut out = BufWriter::new(out.lock());

@@ -1,4 +1,4 @@
-struct FenwickTree<T> {
+pub struct FenwickTree<T> {
     data: Box<[T]>,
 }
 impl<
