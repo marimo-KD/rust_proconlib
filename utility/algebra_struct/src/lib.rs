@@ -1,27 +1,15 @@
 use algebra::*;
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub struct AddMonoid(pub i64);
-impl Magma for AddMonoid {
-    fn op(lhs: Self, rhs: Self) -> Self {
-        Self(lhs.0 + rhs.0)
-    }
+def_monoid! {
+    derive(Copy),
+    pub struct AddMonoid(pub i64),
+    AddMonoid(0),
+    fn op(lhs: AddMonoid, rhs: AddMonoid) -> AddMonoid { AddMonoid(lhs.0 + rhs.0) }
 }
-impl Semigroup for AddMonoid {}
-impl Identity for AddMonoid {
-    fn identity() -> Self {
-        Self(0)
-    }
-}
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub struct MaxMonoid(pub i64);
-impl Magma for MaxMonoid {
-    fn op(lhs: Self, rhs: Self) -> Self {
-        Self(lhs.0.max(rhs.0))
-    }
-}
-impl Semigroup for MaxMonoid {}
-impl Identity for MaxMonoid {
-    fn identity() -> Self {
-        Self(0)
+def_monoid! {
+    derive(Copy),
+    pub struct MaxMonoid(pub i64),
+    MaxMonoid(0),
+    fn op(lhs: MaxMonoid, rhs: MaxMonoid) -> MaxMonoid {
+        MaxMonoid(lhs.0.max(rhs.0))
     }
 }

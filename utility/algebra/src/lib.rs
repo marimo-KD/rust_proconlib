@@ -4,7 +4,6 @@ pub trait Element: Sized + Clone + PartialEq + fmt::Debug {}
 impl<T: Sized + Clone + PartialEq + fmt::Debug> Element for T {}
 
 pub trait Zero: ops::Add<Output = Self> + ops::AddAssign + Element {
-    // 単位元です。
     fn zero() -> Self;
 }
 
@@ -48,54 +47,107 @@ impl<T: Monoid + Loop> Group for T {}
 
 pub trait Abel: Group {}
 
+
+#[macro_export]
+macro_rules! def_monoid {
+    (
+        derive($($attr: meta),*),
+        $pub:vis struct $name:ident {
+            $(
+                $field_vis:vis $field_name:ident : $field_type:ty
+            ),*$(,)*
+        }, 
+        $identity:expr, $op:item
+    ) => {
+        #[derive(Debug, Clone, PartialEq, $($attr),*)]
+        $pub struct $name {
+            $(
+                $field_vis $field_name : $field_type
+            ),*
+        }
+        impl_monoid!{$name, $identity, $op}
+    };
+    (
+        derive($($attr: meta),*), 
+        $pub: vis struct $name: ident (
+            $(
+                $field_vis: vis $field_type: ty
+            ),*
+        ), 
+        $identity: expr, $op: item
+    ) => {
+        #[derive(Debug, Clone, PartialEq, $($attr),*)]
+        $pub struct $name (
+            $(
+                $field_vis $field_type
+            ),*
+        );
+        impl_monoid!{$name, $identity, $op}
+    };
+}
+#[macro_export]
+macro_rules! impl_monoid {
+    ($name: ident, $identity: expr, $op: item) => {
+        impl Magma for $name {
+            $op
+        }
+        impl Semigroup for $name {}
+        impl Identity for $name {
+            fn identity() -> Self {
+                $identity
+            }
+        }
+    };
+}
+
 macro_rules! impl_one_integer {
-        ($t: ty) => {
-            impl One for $t {
-                fn one() -> Self {
-                    1 as $t
-                }
+    ($t: ty) => {
+        impl One for $t {
+            fn one() -> Self {
+                1 as $t
             }
-        };
-        ($($t:ty),+) => {
-            $(impl_one_integer!($t);)+
-        };
-    }
+        }
+    };
+    ($($t:ty),+) => {
+        $(impl_one_integer!($t);)+
+    };
+}
 macro_rules! impl_zero_integer {
-        ($t: ty) => {
-            impl Zero for $t {
-                fn zero() -> Self {
-                    0 as $t
-                }
+    ($t: ty) => {
+        impl Zero for $t {
+            fn zero() -> Self {
+                0 as $t
             }
-        };
-        ($($t:ty),+) => {
-            $(impl_zero_integer!($t);)+
-        };
-    }
+        }
+    };
+    ($($t:ty),+) => {
+        $(impl_zero_integer!($t);)+
+    };
+}
 macro_rules! impl_abel_integer {
-        ($t: ty) => {
-            impl Magma for $t {
-                fn op(lhs: Self, rhs: Self) ->Self {
-                    lhs + rhs
-                }
+    ($t: ty) => {
+        impl Magma for $t {
+            fn op(lhs: Self, rhs: Self) ->Self {
+                lhs + rhs
             }
-            impl Semigroup for $t {}
-            impl Identity for $t {
-                fn identity() -> Self {
-                    0 as $t
-                }
+        }
+        impl Semigroup for $t {}
+        impl Identity for $t {
+            fn identity() -> Self {
+                0 as $t
             }
-            impl Quasigroup for $t {
-                fn inv(self) -> Self {
-                    -self
-                }
+        }
+        impl Quasigroup for $t {
+            fn inv(self) -> Self {
+                -self
             }
-            impl Abel for $t {}
-        };
-        ($($t:ty),+) => {
-            $(impl_abel_integer!($t);)+
-        };
-    }
+        }
+        impl Abel for $t {}
+    };
+    ($($t:ty),+) => {
+        $(impl_abel_integer!($t);)+
+    };
+}
 impl_one_integer!(i8, i16, i32, i64, i128, u8, u16, u32, u64, u128, usize);
 impl_zero_integer!(i8, i16, i32, i64, i128, u8, u16, u32, u64, u128, usize);
 impl_abel_integer!(i8, i16, i32, i64, i128);

@@ -1,8 +1,11 @@
-use std::collections::hash_map::RandomState;
 use std::hash::{BuildHasher, Hash, Hasher};
 use std::mem::MaybeUninit;
+// use std::collections::hash_map::RandomState;
+// use fxhash::RandomState;
+use ahash::random_state::RandomState;
 
-const REDUN: usize = 2;
+const REDUN: usize = 3;
+#[derive(Debug, Clone)]
 pub struct CuckooHashMap<K: Hash + Eq, V> {
     table: [Box<[Option<(K, V)>]>; REDUN],
     hash: [RandomState; REDUN],
@@ -23,7 +26,7 @@ impl<K: Hash + Eq, V> CuckooHashMap<K, V> {
                 v.into_boxed_slice()
             };
             table[i] = MaybeUninit::new(array);
-            hash[i] = MaybeUninit::new(RandomState::new());
+            hash[i] = MaybeUninit::new(RandomState::with_rand_seeds());
         }
         let table = unsafe { std::mem::transmute::<_, [Box<[Option<(K, V)>]>; REDUN]>(table) };
         let hash = unsafe { std::mem::transmute::<_, [RandomState; REDUN]>(hash) };
@@ -47,28 +50,26 @@ impl<K: Hash + Eq, V> CuckooHashMap<K, V> {
         None
     }
     pub fn insert(&mut self, mut k: K, mut v: V) -> Option<V> {
-        self.size += 1;
-        if !self.load_factor_is_ok() {
-            self.double();
-        }
         let h = self.hash(&k);
         for i in 0..REDUN {
             if self.table[i][h[i]].is_none() {
                 self.table[i][h[i]] = Some((k, v));
+                self.size += 1;
+                self.normalize();
                 return None;
-            } else {
-                if self.table[i][h[i]].as_ref().unwrap().0 == k {
-                    let (_, v) = self.table[i][h[i]].replace((k, v)).unwrap();
-                    return Some(v);
-                }
+            } else if self.table[i][h[i]].as_ref().unwrap().0 == k {
+                let (_, v) = self.table[i][h[i]].replace((k, v)).unwrap();
+                return Some(v);
             }
         }
         loop {
             let mut j = 0;
-            for _ in 0..self.len_log + 2 {
+            for _ in 0..2 * self.len_log + 2 {
                 let h = self.hash_one(&k, j);
                 if self.table[j][h].is_none() {
                     self.table[j][h] = Some((k, v));
+                    self.size += 1;
+                    self.normalize();
                     return None;
                 } else {
                     let kv = self.table[j][h].replace((k, v)).unwrap();
@@ -93,26 +94,18 @@ impl<K: Hash + Eq, V> CuckooHashMap<K, V> {
                 if self.table[i][h[i]].as_ref().unwrap().0 == *k {
                     let (_, v) = self.table[i][h[i]].take().unwrap();
                     self.size -= 1;
-                    if self.size * 4 < self.len * REDUN {
-                        // if load factor is less than 0.25
-                        self.half();
-                    }
+                    self.normalize();
                     return Some(v);
                 }
             }
         }
         None
     }
-    #[inline(always)]
-    fn load_factor_is_ok(&self) -> bool {
-        // 50% is threshold
-        self.size * 2 <= self.len * REDUN
-    }
     fn rehash(&mut self) {
         let mut hash: [MaybeUninit<RandomState>; REDUN] =
             unsafe { MaybeUninit::uninit().assume_init() };
         for i in 0..REDUN {
-            hash[i] = MaybeUninit::new(RandomState::new());
+            hash[i] = MaybeUninit::new(RandomState::with_rand_seeds());
         }
         let hash = unsafe { std::mem::transmute::<_, [RandomState; REDUN]>(hash) };
         self.hash = hash;
@@ -125,11 +118,30 @@ impl<K: Hash + Eq, V> CuckooHashMap<K, V> {
         }
     }
     #[inline(always)]
+    pub fn len(&self) -> usize {
+        self.size
+    }
+    #[inline(always)]
+    pub fn capacity(&self) -> usize {
+        self.len * REDUN
+    }
+    #[inline]
+    fn normalize(&mut self) {
+        if self.len() * 4 < self.capacity() {
+            // if load factor is less than 0.25
+            self.half();
+        } else if self.len() * 10 >= self.capacity() * 9 {
+            // if load factor is larger than 0.90
+            self.double();
+        }
+    }
+    #[inline(always)]
     fn double(&mut self) {
         self.resize(self.len_log + 1, self.len << 1);
     }
     #[inline(always)]
     fn half(&mut self) {
+        debug_assert!(self.len > 0);
         self.resize(self.len_log - 1, self.len >> 1);
     }
     fn resize(&mut self, new_len_log: usize, new_len: usize) {
@@ -155,6 +167,7 @@ impl<K: Hash + Eq, V> CuckooHashMap<K, V> {
             }
         }
     }
+    #[inline]
     fn hash(&self, k: &K) -> [usize; REDUN] {
         let mut ret = [0; REDUN];
         for i in 0..REDUN {
@@ -164,6 +177,7 @@ impl<K: Hash + Eq, V> CuckooHashMap<K, V> {
         }
         ret
     }
+    #[inline]
     fn hash_one(&self, k: &K, idx: usize) -> usize {
         let mut hasher = self.hash[idx].build_hasher();
         k.hash(&mut hasher);

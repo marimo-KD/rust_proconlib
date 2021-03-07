@@ -57,21 +57,22 @@ impl<T: Monoid> RBST<T> {
             }
         }
     }
-    pub fn split(mut self, k: usize) -> (Self, Self) {
-        if self.is_none() {
-            (Self::none(), Self::none())
-        } else {
-            if k <= self.as_ref().left.size() {
-                let x = replace(&mut self.as_mut().left, Self::none()).split(k);
-                self.as_mut().left = x.1;
-                self.as_mut().update();
-                (x.0, self)
-            } else {
-                let x = replace(&mut self.as_mut().right, Self::none())
-                    .split(k - self.as_ref().left.size() - 1);
-                self.as_mut().right = x.0;
-                self.as_mut().update();
-                (self, x.1)
+    pub fn split(self, k: usize) -> (Self, Self) {
+        match self {
+            Self(None) => (Self::none(), Self::none()),
+            mut slf => {
+                if k <= slf.as_ref().left.size() {
+                    let x = replace(&mut slf.as_mut().left, Self::none()).split(k);
+                    slf.as_mut().left = x.1;
+                    slf.as_mut().update();
+                    (x.0, slf)
+                } else {
+                    let x = replace(&mut slf.as_mut().right, Self::none())
+                        .split(k - slf.as_ref().left.size() - 1);
+                    slf.as_mut().right = x.0;
+                    slf.as_mut().update();
+                    (slf, x.1)
+                }
             }
         }
     }

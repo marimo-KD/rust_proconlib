@@ -7,6 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+ahash = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/algorithm/ahash" }
 algebra = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/utility/algebra" }
 algebra_struct = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/utility/algebra_struct" }
 binary_search = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/utility/binary_search" }
@@ -15,13 +16,17 @@ bit_vector = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib
 chminmax = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/utility/chminmax" }
 combination = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/utility/combination" }
 cuckoo_hashing = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/data_structure/cuckoo_hashing" }
+debug = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/utility/debug" }
 extended_gcd = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/algorithm/extended_gcd" }
 fenwick_tree = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/data_structure/fenwick_tree" }
 fft = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/algorithm/fft" }
 fps = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/utility/fps" }
 fps_diff = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/utility/fps_diff" }
+fxhash = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/algorithm/fxhash" }
 geometry = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/utility/geometry" }
+hopscotch_hashing = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/data_structure/hopscotch_hashing" }
 lazy_segment_tree = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/data_structure/lazy_segment_tree" }
+mario = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/utility/mario" }
 mo = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/algorithm/mo" }
 my_range = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/utility/my_range" }
 ntt = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/algorithm/ntt" }
@@ -37,3 +42,4 @@ splay_tree = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib
 static_modint = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/utility/static_modint" }
 unionfind = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/data_structure/unionfind" }
 wavelet_matrix = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/data_structure/wavelet_matrix" }
+xorshift = { path = "/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/algorithm/xorshift" }

@@ -4,6 +4,7 @@ use std::io::*;
 
 fn main() {
     let q = scan!(usize);
+
     let mut map = CuckooHashMap::new();
     let out = stdout();
     let mut out = BufWriter::new(out.lock());

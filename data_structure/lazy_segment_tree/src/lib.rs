@@ -1,97 +1,111 @@
 //ATTENTION
 //まだです。
 use algebra::*;
-pub struct LazySegmentTree<T, S>
+use std::ops::Range;
+#[derive(Debug, Clone)]
+pub struct LazySegmentTree<T, E>
 where
     T: Monoid,
-    S: Monoid,
+    E: Monoid,
 {
-    data: Vec<T>,
-    lazy: Vec<S>,
-    affecter: fn(T, S) -> T,
+    data: Box<[T]>,
+    lazy: Box<[E]>,
+    affecter: fn(T, E) -> T,
     len: usize,
-    height: usize,
+    log: usize,
 }
-impl<T, S> LazySegmentTree<T, S>
+impl<T, E> LazySegmentTree<T, E>
 where
-    T: Monoid,
-    S: Monoid,
+    T: Monoid + Copy,
+    E: Monoid + Copy,
 {
     fn propagate(&mut self, k: usize) {
-        if self.lazy[k] != S::identity() {
-            self.lazy[2 * k] = S::op(self.lazy[2 * k].clone(), self.lazy[k].clone());
-            self.lazy[2 * k + 1] = S::op(self.lazy[2 * k + 1].clone(), self.lazy[k].clone());
-            self.data[k] = self.apply(k);
-            self.lazy[k] = S::identity();
-        }
+        self.apply(k << 1, self.lazy[k]);
+        self.apply((k << 1) + 1, self.lazy[k]);
+        self.lazy[k] = E::identity();
     }
-    fn apply(&mut self, k: usize) -> T {
-        if self.lazy[k] != S::identity() {
-            self.data[k].clone()
-        } else {
-            (self.affecter)(self.data[k].clone(), self.lazy[k].clone())
-        }
+    fn apply(&mut self, k: usize, e: E) {
+        self.data[k] = (self.affecter)(self.data[k], e);
+        self.lazy[k] = E::op(self.lazy[k], e);
     }
-    fn recalc(&mut self, mut k: usize) {
+    fn recalc(&mut self, k: usize) {
+        let mut k = k >> (k.trailing_zeros() as usize);
         k >>= 1;
-        while k > 0 {
-            self.data[k] = T::op(self.apply(2 * k), self.apply(2 * k + 1));
+        while k != 0 {
+            self.data[k] = T::op(self.data[k << 1], self.data[(k << 1) + 1]);
             k >>= 1;
         }
     }
     fn thrust(&mut self, k: usize) {
-        (1..=self.height).rev().for_each(|i| self.propagate(k >> i));
+        (1..=self.log).rev().for_each(|i| self.propagate(k >> i));
     }
-    pub fn new(len: usize, affecter: fn(T, S) -> T) -> Self {
+    pub fn new(len: usize, affecter: fn(T, E) -> T) -> Self {
         let len = len.next_power_of_two();
         let height = len.trailing_zeros() as usize;
         Self {
-            data: vec![T::identity(); 2 * len],
-            lazy: vec![S::identity(); 2 * len],
+            data: vec![T::identity(); 2 * len].into_boxed_slice(),
+            lazy: vec![E::identity(); 2 * len].into_boxed_slice(),
             affecter,
             len,
-            height,
+            log: height,
         }
     }
-    pub fn update(&mut self, a: usize, b: usize, x: &S) {
-        if a >= b {
-            return;
+    pub fn new_with_init(initializer: &[T], affecter: fn(T, E) -> T) -> Self {
+        let len = initializer.len().next_power_of_two();
+        let mut data = vec![T::identity(); 2 * len].into_boxed_slice();
+        for (idx, val) in initializer.iter().enumerate() {
+            data[idx + len] = val.clone();
         }
-        let (mut l, mut r) = (a + self.len, b + self.len);
+        for i in (1..len).rev() {
+            data[i] = T::op(data[i << 1], data[(i << 1) + 1]);
+        }
+        Self {
+            data,
+            lazy: vec![E::identity(); 2 * len].into_boxed_slice(),
+            affecter,
+            len,
+            log: len.trailing_zeros() as usize,
+        }
+    }
+    pub fn update(&mut self, q: Range<usize>, x: E) {
+        let (mut l, mut r) = (q.start + self.len, q.end + self.len);
         self.thrust(l);
         self.thrust(r - 1);
         while l < r {
-            if l % 2 == 1 {
-                self.lazy[l].op_from_left(x.clone());
+            if l & 1 != 0 {
+                self.apply(l, x);
                 l += 1;
             }
-            if r % 2 == 1 {
+            if r & 1 != 0 {
                 r -= 1;
-                self.lazy[r].op_from_right(x.clone());
+                self.apply(r, x);
             }
+            l >>= 1;
+            r >>= 1;
         }
-        self.recalc(a);
-        self.recalc(b);
+        self.recalc(q.start + self.len);
+        self.recalc(q.end + self.len);
     }
-    #[allow(non_snake_case)]
-    pub fn query(&mut self, l: usize, r: usize) -> T {
-        if l >= r {
-            return T::identity();
-        }
-        let (mut l, mut r) = (l + self.len, r + self.len);
+    pub fn query(&mut self, q: Range<usize>) -> T {
+        let (mut l, mut r) = (q.start + self.len, q.end + self.len);
         self.thrust(l);
-        self.thrust(r);
-        let (mut L, mut R) = (T::identity(), T::identity());
+        self.thrust(r - 1);
+        let (mut fl, mut fr) = (T::identity(), T::identity());
         while l < r {
-            if l % 2 == 1 {
-                L.op_from_right(self.apply(l));
+            if l & 1 != 0 {
+                fl = T::op(fl, self.data[l]);
                 l += 1;
             }
-            if r % 2 == 1 {
+            if r & 1 != 0 {
                 r -= 1;
-                R.op_from_left(self.apply(r));
+                fr = T::op(self.data[r], fr);
             }
+            l >>= 1;
+            r >>= 1;
         }
-        T::op(L, R)
+        T::op(fl, fr)
+    }
+    pub fn len(&self) -> usize {
+        self.len
     }
 }

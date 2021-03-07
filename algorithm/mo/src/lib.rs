@@ -58,3 +58,11 @@ impl<T: State> Mo<T> {
         ret
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test() {
+    }
+}

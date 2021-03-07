@@ -1,11 +1,10 @@
+use ntt::*;
+use scanner::*;
+use static_modint::Modint;
 use std::io::*;
 
-use scanner::*;
-use ntt::*;
-use static_modint::Modint;
-
 type Mint = Modint<ntt::P998244353>;
-fn main(){
+fn main() {
     let (n, m) = scan!(usize, usize);
     let a = scan!([Mint; n]);
     let b = scan!([Mint; m]);
