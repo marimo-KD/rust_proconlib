@@ -1,1 +1,0 @@
-/home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/target/debug/test: /home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/algorithm/xorshift/src/bin/test.rs /home/marimo-kd/Dev/CompetitiveProgramming/rust_proconlib/algorithm/xorshift/src/lib.rs
