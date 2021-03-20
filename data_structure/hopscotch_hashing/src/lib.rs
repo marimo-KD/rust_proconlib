@@ -32,14 +32,14 @@ impl<K: Eq + Hash, V> HopscotchHashMap<K, V> {
         }
         // we find vacancy.
         loop {
-            let mut idx = usize::MAX;
+            let mut idx = std::usize::MAX;
             for i in 0..8 * HOP {
                 if let Entry::Vacant() = self.table[(h + i) & self.capacity()] {
                     idx = i;
                     break;
                 }
             }
-            if idx == usize::MAX {
+            if idx == std::usize::MAX {
                 self.double();
                 continue;
             }

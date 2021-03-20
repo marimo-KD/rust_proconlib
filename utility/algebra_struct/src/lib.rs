@@ -3,7 +3,9 @@ def_monoid! {
     derive(Copy),
     pub struct AddMonoid(pub i64),
     AddMonoid(0),
-    fn op(lhs: AddMonoid, rhs: AddMonoid) -> AddMonoid { AddMonoid(lhs.0 + rhs.0) }
+    fn op(lhs: AddMonoid, rhs: AddMonoid) -> AddMonoid {
+        AddMonoid(lhs.0.max(rhs.0))
+    }
 }
 def_monoid! {
     derive(Copy),
@@ -13,3 +15,4 @@ def_monoid! {
         MaxMonoid(lhs.0.max(rhs.0))
     }
 }
+

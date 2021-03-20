@@ -58,7 +58,7 @@ macro_rules! prim_methods {
     () => ()
 }
 
-// MARimo + IO -> MarIo
+/// MARimo + IO -> MarIo
 pub struct MarIo<I: BufRead, O: Write> {
     reader: I,
     writer: BufWriter<O>,
@@ -101,16 +101,16 @@ impl<I: BufRead, O: Write> MarIo<I, O> {
     }
 }
 
-// MarIo with stdin/out
 impl MarIo<BufReader<io::Stdin>, io::Stdout> {
     pub fn new_stdio() -> Self {
+        //! MarIo with stdin/out
         Self::new(BufReader::new(io::stdin()), io::stdout())
     }
 }
 
-// MarIo with stdinlock/stdoutlock
 impl MarIo<io::StdinLock<'static>, io::StdoutLock<'static>> {
     pub unsafe fn new_stdinlock() -> Self {
+        //! MarIo with stdinlock/stdoutlock
         //! UNSAFE!!!
         //! This function makes StdinLock<'static> by Box::leak.
         //! Dropping MarIo made by this func causes memory leak and locking stdin.

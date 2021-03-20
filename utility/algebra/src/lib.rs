@@ -51,12 +51,12 @@ pub trait Abel: Group {}
 #[macro_export]
 macro_rules! def_monoid {
     (
-        derive($($attr: meta),*),
+        derive($($attr:meta),*),
         $pub:vis struct $name:ident {
             $(
                 $field_vis:vis $field_name:ident : $field_type:ty
             ),*$(,)*
-        }, 
+        },
         $identity:expr, $op:item
     ) => {
         #[derive(Debug, Clone, PartialEq, $($attr),*)]
@@ -65,16 +65,16 @@ macro_rules! def_monoid {
                 $field_vis $field_name : $field_type
             ),*
         }
-        impl_monoid!{$name, $identity, $op}
+        $crate::impl_monoid!{$name, $identity, $op}
     };
     (
-        derive($($attr: meta),*), 
-        $pub: vis struct $name: ident (
+        derive($($attr:meta),*),
+        $pub:vis struct $name:ident (
             $(
                 $field_vis: vis $field_type: ty
             ),*
-        ), 
-        $identity: expr, $op: item
+        ),
+        $identity:expr, $op:item
     ) => {
         #[derive(Debug, Clone, PartialEq, $($attr),*)]
         $pub struct $name (
@@ -82,14 +82,17 @@ macro_rules! def_monoid {
                 $field_vis $field_type
             ),*
         );
-        impl_monoid!{$name, $identity, $op}
+        $crate::impl_monoid!{$name, $identity, $op}
     };
 }
 #[macro_export]
 macro_rules! impl_monoid {
-    ($name: ident, $identity: expr, $op: item) => {
+    ($name: ident, $identity: expr, $op:item) => {
         impl Magma for $name {
-            $op
+            fn op(lhs: Self, rhs: Self) -> Self {
+                $op
+                op(lhs, rhs)
+            }
         }
         impl Semigroup for $name {}
         impl Identity for $name {
