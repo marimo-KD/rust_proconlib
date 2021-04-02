@@ -1,5 +1,6 @@
 use algebra::{One, Zero};
-use std::{num::ParseIntError, ops::*, str::FromStr};
+pub mod from;
+pub mod ops;
 pub trait Mod: Copy + std::fmt::Debug + PartialEq {
     const M: u64;
     const S: u64;
@@ -44,96 +45,11 @@ impl<M: Mod> Modint<M> {
         self.pow(M::M - 2)
     }
 }
-impl<M: Mod> Neg for Modint<M> {
-    type Output = Self;
-    fn neg(self) -> Self::Output {
-        self * Self::new_internal(M::M - 1)
-    }
-}
-// {{{ operation
-// {{{ binary operation
-impl<M: Mod, T: Into<Modint<M>>> Add<T> for Modint<M> {
-    type Output = Self;
-    fn add(mut self, rhs: T) -> Self {
-        self.add_assign(rhs);
-        self
-    }
-}
-impl<M: Mod, T: Into<Modint<M>>> Sub<T> for Modint<M> {
-    type Output = Self;
-    fn sub(mut self, rhs: T) -> Self {
-        self.sub_assign(rhs);
-        self
-    }
-}
-impl<M: Mod, T: Into<Modint<M>>> Mul<T> for Modint<M> {
-    type Output = Self;
-    fn mul(mut self, rhs: T) -> Self {
-        self.mul_assign(rhs);
-        self
-    }
-}
-// }}}
-// {{{ compound
-impl<M: Mod, T: Into<Modint<M>>> AddAssign<T> for Modint<M> {
-    fn add_assign(&mut self, rhs: T) {
-        self.x += rhs.into().x;
-        if self.x >= M::M {
-            self.x -= M::M;
-        }
-    }
-}
-impl<M: Mod, T: Into<Modint<M>>> SubAssign<T> for Modint<M> {
-    fn sub_assign(&mut self, rhs: T) {
-        let rhs = rhs.into();
-        if self.x < rhs.x {
-            self.x += M::M;
-        }
-        self.x -= rhs.x;
-    }
-}
-impl<M: Mod, T: Into<Modint<M>>> MulAssign<T> for Modint<M> {
-    fn mul_assign(&mut self, rhs: T) {
-        self.x *= rhs.into().x;
-        self.x = M::modulo(self.x);
-    }
-}
-// }}}
-// }}}
 impl<M: Mod> std::fmt::Display for Modint<M> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         self.x.fmt(f)
     }
 }
-// {{{ from
-impl<M: Mod> From<i64> for Modint<M> {
-    fn from(x: i64) -> Self {
-        Self::new((x % M::M as i64) as u64 + M::M)
-    }
-}
-impl<M: Mod> From<i32> for Modint<M> {
-    fn from(x: i32) -> Self {
-        Self::from(x as i64)
-    }
-}
-impl<M: Mod> From<u32> for Modint<M> {
-    fn from(x: u32) -> Self {
-        Self::new(x as u64)
-    }
-}
-impl<M: Mod> From<usize> for Modint<M> {
-    fn from(x: usize) -> Self {
-        Self::new(x as u64)
-    }
-}
-impl<M: Mod> FromStr for Modint<M> {
-    type Err = ParseIntError;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let x = s.parse::<u64>()?;
-        Ok(Self::new(x))
-    }
-}
-//}}}
 impl<M: Mod> Zero for Modint<M> {
     fn zero() -> Self {
         Self::new_internal(0)

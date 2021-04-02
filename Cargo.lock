@@ -59,6 +59,10 @@ name = "debug"
 version = "0.1.0"
 
 [[package]]
+name = "eratosthenes_sieve"
+version = "0.1.0"
+
+[[package]]
 name = "extended_gcd"
 version = "0.1.0"
 
@@ -273,6 +277,14 @@ dependencies = [
  "algebra",
  "algebra_struct",
  "my_range",
+]
+
+[[package]]
+name = "rolling_hash"
+version = "0.1.0"
+dependencies = [
+ "static_modint",
+ "xorshift",
 ]
 
 [[package]]
