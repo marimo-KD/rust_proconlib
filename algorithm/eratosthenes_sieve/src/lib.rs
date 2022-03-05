@@ -40,5 +40,6 @@ mod tests {
     fn test_sieve() {
         let s = sieve(100);
         println!("{:?}", s.factor(50));
+        println!("{:?}", s.factor(97));
     }
 }

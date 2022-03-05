@@ -8,10 +8,9 @@ use std::ops::Range;
 pub struct SplayTree<T: Monoid>(Option<Box<Node<T>>>);
 impl<T: Monoid> SplayTree<T> {
     pub fn size(&self) -> usize {
-        if let Some(ref x) = self.0 {
-            x.size
-        } else {
-            0
+        match self.0 {
+            Some(ref x) => x.size,
+            _ => 0,
         }
     }
     pub fn access(&mut self, k: usize) -> &T {

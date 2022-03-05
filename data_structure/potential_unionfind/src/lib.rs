@@ -4,14 +4,13 @@ use algebra::*;
 pub struct WeightedUnionfind<M: Abel> {
     par: Box<[i32]>,
     diff_weight: Box<[M]>,
-    // 親との差です
     group_count: usize,
 }
-impl<M: Abel> WeightedUnionfind<M> {
+impl<G: Abel> WeightedUnionfind<G> {
     pub fn new(n: usize) -> Self {
         WeightedUnionfind {
             par: vec![-1; n].into_boxed_slice(),
-            diff_weight: vec![M::identity(); n].into_boxed_slice(),
+            diff_weight: vec![G::identity(); n].into_boxed_slice(),
             group_count: 0,
         }
     }
@@ -26,15 +25,15 @@ impl<M: Abel> WeightedUnionfind<M> {
             r
         }
     }
-    pub fn weight(&mut self, x: usize) -> M {
+    pub fn weight(&mut self, x: usize) -> G {
         self.find_root(x);
         self.diff_weight[x].clone()
     }
-    pub fn diff(&mut self, x: usize, y: usize) -> M {
-        M::op(self.weight(y), self.weight(x).inv())
+    pub fn diff(&mut self, x: usize, y: usize) -> G {
+        G::op(self.weight(y), self.weight(x).inv())
     }
-    pub fn merge(&mut self, x: usize, y: usize, w: M) -> Option<usize> {
-        let mut w = M::op(M::op(w, self.weight(x)), self.weight(y).inv());
+    pub fn merge(&mut self, x: usize, y: usize, w: G) -> Option<usize> {
+        let mut w = G::op(G::op(w, self.weight(x)), self.weight(y).inv());
         let mut x = self.find_root(x);
         let mut y = self.find_root(y);
         if x == y {
