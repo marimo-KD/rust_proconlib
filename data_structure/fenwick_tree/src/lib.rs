@@ -15,7 +15,8 @@ impl<
         ret.build();
         ret
     }
-    pub fn new_with_init(data: Vec<T>) -> Self {
+    pub fn new_with_init(mut data: Vec<T>) -> Self {
+        data.insert(0, std::default::Default::default());
         let mut ret = Self {
             data: data.into_boxed_slice(),
         };
@@ -41,6 +42,7 @@ impl<
         }
     }
     pub fn query0(&mut self, mut k: usize) -> T {
+        // return: sum of [0,k)
         let mut ret: T = std::default::Default::default();
         while k > 0 {
             ret = ret + self.data[k];
@@ -52,6 +54,7 @@ impl<
         ret
     }
     pub fn query(&mut self, l: usize, r: usize) -> T {
+        // return: sum of [l, r)
         self.query0(r) - self.query0(l)
     }
     pub fn len(&self) -> usize {
