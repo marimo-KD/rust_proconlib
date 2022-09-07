@@ -12,3 +12,4 @@ bit_vector = { path = "../bit_vector" }
 
 [dev-dependencies]
 rand = "0.7"
+scanner = { path = "../scanner" }

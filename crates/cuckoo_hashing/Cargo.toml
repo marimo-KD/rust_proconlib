@@ -10,3 +10,6 @@ license = "CC0-1.0"
 [dependencies]
 # fxhash = { path = "../../algorithm/fxhash" }
 ahash = { path = "../ahash" }
+
+[dev-dependencies]
+scanner = { path = "../scanner" }

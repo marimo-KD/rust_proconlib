@@ -25,6 +25,9 @@ version = "0.1.0"
 [[package]]
 name = "binary_trie"
 version = "0.1.0"
+dependencies = [
+ "scanner",
+]
 
 [[package]]
 name = "bit_vector"
@@ -52,6 +55,7 @@ name = "cuckoo_hashing"
 version = "0.1.0"
 dependencies = [
  "ahash",
+ "scanner",
 ]
 
 [[package]]
@@ -69,6 +73,9 @@ version = "0.1.0"
 [[package]]
 name = "fenwick_tree"
 version = "0.1.0"
+dependencies = [
+ "mario",
+]
 
 [[package]]
 name = "fft"
@@ -126,6 +133,8 @@ name = "lazy_segment_tree"
 version = "0.1.0"
 dependencies = [
  "algebra",
+ "scanner",
+ "static_modint",
 ]
 
 [[package]]
@@ -283,10 +292,6 @@ name = "unionfind"
 version = "0.1.0"
 
 [[package]]
-name = "verify"
-version = "0.1.0"
-
-[[package]]
 name = "wasi"
 version = "0.9.0+wasi-snapshot-preview1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -298,6 +303,7 @@ version = "0.1.0"
 dependencies = [
  "bit_vector",
  "rand",
+ "scanner",
 ]
 
 [[package]]

@@ -9,3 +9,7 @@ license = "CC0-1.0"
 
 [dependencies]
 algebra = { path = "../algebra" }
+
+[dev-dependencies]
+scanner = { path = "../scanner" }
+static_modint = { path = "../static_modint" }
