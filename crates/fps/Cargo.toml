@@ -1,5 +1,5 @@
 [package]
-name = "randomized_binary_search_tree"
+name = "fps"
 version = "0.1.0"
 authors = ["marimo-KD <marimo.for.others@gmail.com>"]
 edition = "2018"
@@ -8,8 +8,6 @@ license = "CC0-1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-algebra = { path = "../../utility/algebra" }
-my_range = { path = "../../utility/my_range" }
-
-[dev-dependencies]
-algebra_struct = { path = "../../utility/algebra_struct" }
+algebra = { path = "../algebra" }
+ntt = { path = "../ntt" }
+static_modint = { path = "../static_modint" }

@@ -1,5 +1,5 @@
 [package]
-name = "ntt"
+name = "lazy_segment_tree"
 version = "0.1.0"
 authors = ["marimo-KD <marimo.for.others@gmail.com>"]
 edition = "2018"
@@ -8,5 +8,4 @@ license = "CC0-1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-algebra = { path = "../../utility/algebra" }
-static_modint = { path = "../../utility/static_modint" }
+algebra = { path = "../algebra" }

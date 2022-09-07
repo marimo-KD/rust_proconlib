@@ -1,5 +1,5 @@
 [package]
-name = "fps"
+name = "persistent_segment_tree"
 version = "0.1.0"
 authors = ["marimo-KD <marimo.for.others@gmail.com>"]
 edition = "2018"
@@ -9,5 +9,7 @@ license = "CC0-1.0"
 
 [dependencies]
 algebra = { path = "../algebra" }
-ntt = { path = "../../algorithm/ntt" }
-static_modint = { path = "../static_modint" }
+my_range = { path = "../my_range" }
+
+[dev-dependencies]
+algebra_struct = { path = "../algebra_struct" }

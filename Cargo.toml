@@ -1,8 +1,4 @@
 [workspace]
 members = [
-  "algorithm/*",
-  "data_structure/*",
-  "signature/*",
-  "utility/*",
-  "verification/*",
+  "crates/*"
 ]
