@@ -1,6 +1,5 @@
-
 # rust_proconlib
-
+[![Actions Status](https://github.com/marimo-KD/rust_proconlib/workflows/verify/badge.svg)](https://github.com/marimo-KD/rust_proconlib/actions)
 marimo_([@MMARIMO0o](https://twitter.com/MMARIMO0o))のprocon用ライブラリです。
 
 [cargo-equip](https://github.com/qryxip/cargo-equip)の使用を前提に書いています。
