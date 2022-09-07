@@ -15,6 +15,17 @@ jobs:
     - name: Install dependencies
       run: pip3 install -U online-judge-verify-helper
 
+    - name: Cache Rust toolchain
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cargo/bin
+          ~/.cargo/env
+          ~/.rustup/settings.toml
+          ~/.rustup/toolchains
+          ~/.rustup/update-hashes
+        key: ${{ runner.os }}-rust-toolchain-${{ hashFiles('rust-toolchain.toml') }}
+
     - name: Set up Rust (1.42.0)
       uses: actions-rs/toolchain@v1
       with:
