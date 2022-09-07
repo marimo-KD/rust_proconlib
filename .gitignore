@@ -1,2 +1,4 @@
 target/
 .verify-helper/cache/
+.verify-helper/timestamps.local.json
+.verify-helper/timestamps.remote.json
