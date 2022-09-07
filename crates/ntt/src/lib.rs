@@ -21,7 +21,7 @@ fn _ntt<M: NTTableMod>(a: &mut [Modint<M>], g: Modint<M>) {
         let mut w = Modint::one();
         for j in (0..n).step_by(i) {
             for k in 0..i {
-                a[j + k] = b[((j >> 1) & mask) + k] + b[(((j >> 1) + i) & mask) + k] * w;
+                a[j + k] = b[((j << 1) & mask) + k] + b[(((j << 1) + i) & mask) + k] * w;
             }
             w *= d;
         }

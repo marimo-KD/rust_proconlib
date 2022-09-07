@@ -151,6 +151,7 @@ name = "ntt"
 version = "0.1.0"
 dependencies = [
  "algebra",
+ "scanner",
  "static_modint",
 ]
 
@@ -279,6 +280,10 @@ dependencies = [
 
 [[package]]
 name = "unionfind"
+version = "0.1.0"
+
+[[package]]
+name = "verify"
 version = "0.1.0"
 
 [[package]]
