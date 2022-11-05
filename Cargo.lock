@@ -148,6 +148,10 @@ name = "mario"
 version = "0.1.0"
 
 [[package]]
+name = "memoise"
+version = "0.1.0"
+
+[[package]]
 name = "mo"
 version = "0.1.0"
 
@@ -245,6 +249,13 @@ dependencies = [
  "algebra",
  "algebra_struct",
  "my_range",
+]
+
+[[package]]
+name = "rational"
+version = "0.1.0"
+dependencies = [
+ "algebra",
 ]
 
 [[package]]

@@ -31,6 +31,11 @@ pub fn sieve(n: u64) -> Factorizer {
             j += i;
         }
     }
+    for i in 0..(n as usize) {
+        if ret[i] == 0 {
+            ret[i] = i as u64;
+        }
+    }
     Factorizer::new(ret)
 }
 #[cfg(test)]

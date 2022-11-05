@@ -15,4 +15,3 @@ def_monoid! {
         MaxMonoid(lhs.0.max(rhs.0))
     }
 }
-

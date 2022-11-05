@@ -1,6 +1,11 @@
 use std::io;
 use std::io::{BufRead, BufReader, BufWriter, ErrorKind, Result, Write};
 
+pub mod prelude {
+    pub use super::{MarIo, read};
+    pub use super::token::{Token, isize1, usize1};
+    pub use super::io::Write;
+}
 pub mod token;
 use token::Token;
 
@@ -70,7 +75,7 @@ impl<I: BufRead, O: Write> MarIo<I, O> {
             writer: BufWriter::new(writer),
         }
     }
-    fn token(&mut self) -> String {
+    pub fn token(&mut self) -> String {
         let mut buf = Vec::new();
         loop {
             buf.clear();
@@ -112,7 +117,7 @@ impl MarIo<io::StdinLock<'static>, io::StdoutLock<'static>> {
     pub unsafe fn new_stdinlock() -> Self {
         //! MarIo with stdinlock/stdoutlock
         //! UNSAFE!!!
-        //! This function makes StdinLock<'static> by Box::leak.
+        //! This function generates StdinLock<'static> by Box::leak.
         //! Dropping MarIo made by this func causes memory leak and locking stdin.
         let stdin = Box::leak(Box::new(io::stdin()));
         let stdout = Box::leak(Box::new(io::stdout()));
@@ -133,10 +138,10 @@ impl<I: BufRead, O: Write> Write for MarIo<I, O> {
 #[macro_export]
 macro_rules! read {
     ($stdin:ident: [char]) => {
-        $stdin.string().chars().collect::<Vec<_>>()
+        $stdin.token().chars().collect::<Vec<_>>()
     };
     ($stdin:ident: [u8]) => {
-        $stdin.string().bytes().collect::<Vec<_>>()
+        $stdin.token().bytes().collect::<Vec<_>>()
     };
     ($stdin:ident: [$($t:tt),*; $n:expr]) => {
         (0..$n).map(|_| ($(read!($stdin: $t)),*)).collect::<Vec<_>>()
@@ -147,6 +152,21 @@ macro_rules! read {
     ($stdin:ident: $($t:ty),+) => {
         ($(read!($stdin: $t)),*)
     };
+    ($stdin:ident, [char]) => {
+        $stdin.token().chars().collect::<Vec<_>>()
+    };
+    ($stdin:ident, [u8]) => {
+        $stdin.token().bytes().collect::<Vec<_>>()
+    };
+    ($stdin:ident, [$($t:tt),*; $n:expr]) => {
+        (0..$n).map(|_| ($(read!($stdin: $t)),*)).collect::<Vec<_>>()
+    };
+    ($stdin:ident, $t:ty) => {
+        $stdin.parse::<$t>()
+    };
+    ($stdin:ident, $($t:ty),+) => {
+        ($(read!($stdin: $t)),*)
+    };
 }
 #[cfg(test)]
 mod tests {
@@ -154,6 +174,6 @@ mod tests {
     #[test]
     fn test_tuple() {
         let mut input = MarIo::new_stdio();
-        let _ = input.i32();
+        let _ = read!(input, [char]);
     }
 }

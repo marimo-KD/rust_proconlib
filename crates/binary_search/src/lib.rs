@@ -7,34 +7,34 @@ impl<T: Ord> BinarySearch<T> for [T] {
     fn lower_bound(&self, x: &T) -> usize {
         let mut l = 0;
         let mut r = self.len();
-        while r - l > 1 {
+        while l != r {
             let m = (l + r) >> 1;
             match self[m].cmp(x) {
                 Ordering::Less => {
-                    l = m;
+                    l = m + 1;
                 }
                 _ => {
                     r = m;
                 }
             }
         }
-        r
+        l
     }
     fn upper_bound(&self, x: &T) -> usize {
         let mut l = 0;
         let mut r = self.len();
-        while r - l > 1 {
+        while l != r {
             let m = (l + r) >> 1;
             match self[m].cmp(x) {
                 Ordering::Greater => {
                     r = m;
                 }
                 _ => {
-                    l = m;
+                    l = m + 1;
                 }
             }
         }
-        r
+        l
     }
 }
 #[cfg(test)]
@@ -46,5 +46,9 @@ mod tests {
 
         assert_eq!(vec.lower_bound(&4), 2);
         assert_eq!(vec.upper_bound(&4), 3);
+
+        let vec = vec![1, 1, 1];
+        assert_eq!(vec.lower_bound(&1), 0);
+        assert_eq!(vec.upper_bound(&1), 3);
     }
 }

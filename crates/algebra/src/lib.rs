@@ -14,8 +14,11 @@ pub trait One: ops::Mul<Output = Self> + ops::MulAssign + Element {
 pub trait Ring: Zero + One + ops::Neg + ops::Sub<Output = Self> + ops::SubAssign {}
 impl<T: Zero + One + ops::Neg + ops::Sub<Output = Self> + ops::SubAssign> Ring for T {}
 
+pub trait Field: Ring + ops::Div<Output = Self> + ops::DivAssign {}
+impl<T: Ring + ops::Div<Output = Self> + ops::DivAssign> Field for T {}
+
 pub trait Magma: Element {
-    fn op(lhs: Self, rhs: Self) -> Self;
+    fn op<L: Into<Self>, R: Into<Self>>(lhs: L, rhs: R) -> Self;
     fn op_from_left(&mut self, left: Self) {
         *self = Self::op(left, self.clone());
     }
@@ -70,6 +73,24 @@ macro_rules! def_monoid {
     (
         derive($($attr:meta),*),
         $pub:vis struct $name:ident (
+            $field_vis: vis $field_type: ty
+        ),
+        $identity:expr, $op:item
+    ) => {
+        #[derive(Debug, Clone, PartialEq, $($attr),*)]
+        $pub struct $name (
+            $field_vis $field_type
+        );
+        $crate::impl_monoid!{$name, $identity, $op}
+        impl From<$field_type> for $name {
+            fn from(t: $field_type) -> Self {
+                Self(t)
+            }
+        }
+    };
+    (
+        derive($($attr:meta),*),
+        $pub:vis struct $name:ident (
             $(
                 $field_vis: vis $field_type: ty
             ),*
@@ -89,7 +110,9 @@ macro_rules! def_monoid {
 macro_rules! impl_monoid {
     ($name: ident, $identity: expr, $op:item) => {
         impl Magma for $name {
-            fn op(lhs: Self, rhs: Self) -> Self {
+            fn op<L: Into<Self>, R:Into<Self>>(lhs: L, rhs: R) -> Self {
+                let lhs = lhs.into();
+                let rhs = rhs.into();
                 $op
                 op(lhs, rhs)
             }
@@ -130,8 +153,8 @@ macro_rules! impl_zero_integer {
 macro_rules! impl_abel_integer {
     ($t: ty) => {
         impl Magma for $t {
-            fn op(lhs: Self, rhs: Self) ->Self {
-                lhs + rhs
+            fn op<L: Into<Self>, R: Into<Self>>(lhs: L, rhs: R) ->Self {
+                lhs.into() + rhs.into()
             }
         }
         impl Semigroup for $t {}
